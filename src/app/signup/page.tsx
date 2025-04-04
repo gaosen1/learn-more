@@ -16,6 +16,7 @@ export default function Signup() {
     agreeTerms: false
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -25,29 +26,50 @@ export default function Signup() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    
     // Basic validation
     if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
       setError('Please fill in all required fields');
+      setIsLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      setIsLoading(false);
       return;
     }
 
     if (!formData.agreeTerms) {
       setError('Please agree to the Terms of Service and Privacy Policy');
+      setIsLoading(false);
       return;
     }
 
-    // Registration logic would go here
-    console.log('Signup data:', formData);
-    
-    // Simulate successful registration
-    router.push('/dashboard');
+    try {
+      // In a real app, this would be an API call to register the user
+      // For demo purposes, we'll simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Simulate successful registration
+      // Generate a fake token and store it in localStorage
+      const fakeToken = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('userToken', fakeToken);
+      
+      console.log('Registration successful, token:', fakeToken);
+      
+      // Redirect to dashboard
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError('Registration failed. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -123,7 +145,7 @@ export default function Signup() {
                 />
               </div>
               
-              <div className={styles.terms}>
+              <div className={styles.termsCheckbox}>
                 <label className={styles.checkboxLabel}>
                   <input
                     type="checkbox"
@@ -135,19 +157,19 @@ export default function Signup() {
                   />
                   <span>
                     I agree to LearnMore's{' '}
-                    <Link href="/terms" className={styles.termsLink}>
+                    <Link href="/terms" className={styles.link}>
                       Terms of Service
-                    </Link>
-                    {' '}and{' '}
-                    <Link href="/privacy" className={styles.termsLink}>
-                      Privacy Policy
                     </Link>
                   </span>
                 </label>
               </div>
               
-              <button type="submit" className={`btn btn-primary ${styles.submitButton}`}>
-                Sign Up
+              <button 
+                type="submit" 
+                className={`btn btn-primary ${styles.submitButton}`}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Creating Account...' : 'Sign Up'}
               </button>
             </form>
             

@@ -1,0 +1,385 @@
+.courseEditPage {
+  padding: 2rem 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.pageTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.primaryButton, .secondaryButton, .button, .addLessonButton, .actionButton, .deleteButton, .dangerButton {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primaryButton {
+  background-color: var(--primary-600);
+  color: white;
+  border: none;
+}
+
+.primaryButton:hover {
+  background-color: var(--primary-700);
+}
+
+.primaryButton:disabled {
+  background-color: var(--gray-300);
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  background-color: white;
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+}
+
+.secondaryButton:hover {
+  background-color: var(--gray-50);
+}
+
+.button {
+  background-color: var(--primary-600);
+  color: white;
+  border: none;
+}
+
+.button:hover {
+  background-color: var(--primary-700);
+}
+
+.saveMessage {
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.successMessage {
+  background-color: var(--success-50);
+  color: var(--success-700);
+  border: 1px solid var(--success-200);
+}
+
+.errorMessage {
+  background-color: var(--error-50);
+  color: var(--error-700);
+  border: 1px solid var(--error-200);
+}
+
+.tabNav {
+  display: flex;
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: 2rem;
+}
+
+.tabButton {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.tabButton:hover {
+  color: var(--gray-900);
+}
+
+.activeTab {
+  color: var(--primary-600);
+  border-bottom: 2px solid var(--primary-600);
+}
+
+.formContainer {
+  max-width: 1000px;
+}
+
+.formField {
+  margin-bottom: 1.5rem;
+}
+
+.formField label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  margin-bottom: 0.5rem;
+}
+
+.formField input, .formField textarea, .formField select {
+  width: 100%;
+  padding: 0.625rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 0.375rem;
+  background-color: white;
+}
+
+.formField input:focus, .formField textarea:focus, .formField select:focus {
+  outline: none;
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 1px var(--primary-400);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkbox {
+  width: auto !important;
+}
+
+.fieldHelp {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+}
+
+.imagePreview {
+  margin-top: 0.75rem;
+  width: 200px;
+  height: 120px;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+  background-color: var(--gray-50);
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lessonControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.lessonControls h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.addLessonButton {
+  background-color: var(--primary-50);
+  color: var(--primary-600);
+  border: 1px solid var(--primary-200);
+}
+
+.addLessonButton:hover {
+  background-color: var(--primary-100);
+  border-color: var(--primary-300);
+}
+
+.noLessons {
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--gray-50);
+  border-radius: 0.5rem;
+  color: var(--gray-600);
+}
+
+.lessonsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lessonItem {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  border: 1px solid var(--gray-200);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.lessonNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.lessonEditForm {
+  flex: 1;
+}
+
+.lessonHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.lessonTitleInput {
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.lessonActions {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.actionButton {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-200);
+}
+
+.actionButton:hover {
+  background-color: var(--gray-200);
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--error-50);
+  color: var(--error-600);
+  border: 1px solid var(--error-200);
+}
+
+.deleteButton:hover {
+  background-color: var(--error-100);
+  border-color: var(--error-300);
+}
+
+.lessonContent {
+  width: 100%;
+}
+
+.lessonContentInput {
+  width: 100%;
+  resize: vertical;
+}
+
+.dangerZone {
+  margin-top: 3rem;
+  border: 1px solid var(--error-300);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  background-color: var(--error-50);
+}
+
+.dangerZone h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--error-700);
+  margin-bottom: 1rem;
+}
+
+.dangerAction {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dangerAction h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.dangerAction p {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin-top: 0.25rem;
+}
+
+.dangerButton {
+  background-color: var(--error-600);
+  color: white;
+  border: none;
+}
+
+.dangerButton:hover {
+  background-color: var(--error-700);
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--gray-600);
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--gray-200);
+  border-top: 4px solid var(--primary-600);
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.errorTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 1rem;
+}
+
+.errorMessage {
+  font-size: 1.125rem;
+  color: var(--gray-600);
+  margin-bottom: 2rem;
+  max-width: 600px;
+} 

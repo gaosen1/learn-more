@@ -14,6 +14,7 @@ export default function Login() {
     rememberMe: false
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -23,19 +24,44 @@ export default function Login() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Login logic would go here
-    // This is just sample code - implement actual login in a real app
-    console.log('Login data:', formData);
-    
+    setError('');
+    setIsLoading(true);
+
+    // 基本验证
     if (!formData.email || !formData.password) {
       setError('Please fill in all required fields');
+      setIsLoading(false);
       return;
     }
-    
-    // Simulate successful login
-    router.push('/dashboard');
+
+    try {
+      // 在真实应用中，这里应该是登录API调用
+      // 这里我们模拟登录过程
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 模拟登录成功
+      // 生成一个假的token并存储到localStorage
+      const fakeToken = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('userToken', fakeToken);
+      
+      // 如果勾选了"记住我"，可以设置更长时间的token有效期
+      if (formData.rememberMe) {
+        // 在实际应用中，可能需要设置token的过期时间或其他逻辑
+        localStorage.setItem('rememberMe', 'true');
+      }
+      
+      console.log('Login successful, token:', fakeToken);
+      
+      // 重定向到仪表板页面
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Login failed. Please check your credentials and try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -99,8 +125,12 @@ export default function Login() {
                 </Link>
               </div>
               
-              <button type="submit" className={`btn btn-primary ${styles.submitButton}`}>
-                Login
+              <button 
+                type="submit" 
+                className={`btn btn-primary ${styles.submitButton}`}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Logging in...' : 'Login'}
               </button>
             </form>
             

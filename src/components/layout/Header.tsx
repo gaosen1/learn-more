@@ -1,18 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
 
 const navigation = [
   { name: 'Home', href: '/' },
+  { name: 'Features', href: '/features' },
   { name: 'My Courses', href: '/dashboard' },
   { name: 'Create Course', href: '/create' },
   { name: 'About', href: '/about' },
 ];
 
+interface NavigationItem {
+  name: string;
+  href: string;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+}
+
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // 在客户端检查用户登录状态
+  useEffect(() => {
+    // 这里可以使用您的实际登录状态检查逻辑
+    // 例如：从localStorage或cookie中获取令牌
+    const userToken = localStorage.getItem('userToken');
+    setIsLoggedIn(!!userToken);
+  }, []);
+
+  // 用户导航项，根据登录状态显示不同的导航项
+  const userNavigation: NavigationItem[] = isLoggedIn 
+    ? [
+        { name: 'Profile', href: '/profile' },
+        { name: 'Settings', href: '/settings' },
+        { name: 'Logout', href: '#', onClick: handleLogout }
+      ] 
+    : [];
+
+  // 登出处理函数
+  function handleLogout(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault();
+    // 清除登录令牌
+    localStorage.removeItem('userToken');
+    setIsLoggedIn(false);
+    // 如果有需要，可以重定向到首页
+    window.location.href = '/';
+  }
 
   return (
     <header className={styles.header}>
@@ -37,12 +72,32 @@ export default function Header() {
                 {item.name}
               </Link>
             ))}
-            <Link
-              href="/login"
-              className="btn btn-primary"
-            >
-              Login
-            </Link>
+            {isLoggedIn ? (
+              <div className={styles.userMenu}>
+                <div className={styles.userAvatar}>
+                  <span className={styles.userInitials}>U</span>
+                </div>
+                <div className={styles.userDropdown}>
+                  {userNavigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={styles.userDropdownLink}
+                      onClick={item.onClick}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="btn btn-primary"
+              >
+                Login
+              </Link>
+            )}
           </div>
           <div className={styles.mobileNavButton}>
             <button
@@ -100,13 +155,31 @@ export default function Header() {
                 ))}
               </div>
               <div className={styles.mobileMenuFooter}>
-                <Link
-                  href="/login"
-                  className="btn btn-primary"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Login
-                </Link>
+                {isLoggedIn ? (
+                  <div className={styles.mobileUserMenu}>
+                    {userNavigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={styles.mobileNavLink}
+                        onClick={(e) => {
+                          setMobileMenuOpen(false);
+                          if (item.onClick) item.onClick(e);
+                        }}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="btn btn-primary"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                )}
               </div>
             </div>
           </div>
