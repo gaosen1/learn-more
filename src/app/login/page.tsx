@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/toast";
 import { FaGithub } from "react-icons/fa";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
+import { LoadingDots } from "@/components/ui/loading";
 
 export default function Login() {
   const { toast } = useToast();
@@ -199,10 +200,18 @@ export default function Login() {
                   type="button"
                   variant="github"
                   disabled={isGithubLoading}
-                  isLoading={isGithubLoading}
                 >
-                  <FaGithub className={styles.githubIcon} />
-                  Continue with GitHub
+                  {isGithubLoading ? (
+                    <div className="flex items-center">
+                      <LoadingDots size="sm" variant="light" />
+                      <span className="ml-2">Connecting...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <FaGithub className={`${styles.githubIcon} mr-2`} />
+                      Continue with GitHub
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

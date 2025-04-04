@@ -271,7 +271,7 @@ export async function GET(request: NextRequest) {
     
     if (!user) {
       // Create new user if not exists
-      console.log('User not found, creating new user...');
+      console.log('User not found, creating new user with STUDENT role...');
       user = await prisma.user.create({
         data: {
           email: primaryEmail,
@@ -281,17 +281,31 @@ export async function GET(request: NextRequest) {
           avatar: userData.avatar_url
         }
       });
-      console.log('New user created:', user.id);
+      console.log('New user created:', user.id, 'with role:', user.role);
     } else {
-      console.log('Existing user found:', user.id);
+      console.log('Existing user found:', user.id, 'with role:', user.role);
+      
+      // Update user information if needed
+      let needsUpdate = false;
+      const updateData: any = {};
+      
+      // Update name if missing
+      if (!user.name && (userData.name || userData.login)) {
+        updateData.name = userData.name || userData.login;
+        needsUpdate = true;
+      }
+      
+      // Update avatar if missing
       if (!user.avatar && userData.avatar_url) {
-        // Update avatar if user exists but has no avatar
-        console.log('Updating user avatar...');
+        updateData.avatar = userData.avatar_url;
+        needsUpdate = true;
+      }
+      
+      if (needsUpdate) {
+        console.log('Updating user information:', updateData);
         user = await prisma.user.update({
           where: { id: user.id },
-          data: { 
-            avatar: userData.avatar_url
-          }
+          data: updateData
         });
       }
     }

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     // 验证必填字段
     if (!email || !password) {
       return NextResponse.json(
-        { error: '邮箱和密码为必填项' },
+        { error: 'The email address and password are required' },
         { status: 400 }
       );
     }
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     // 用户不存在
     if (!user) {
       return NextResponse.json(
-        { error: '邮箱或密码不正确' },
+        { error: 'The email address or password is incorrect' },
         { status: 401 }
       );
     }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: '邮箱或密码不正确' },
+        { error: 'The email address or password is incorrect' },
         { status: 401 }
       );
     }
@@ -52,9 +52,9 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('登录错误:', error);
+    console.error('Login error:', error);
     return NextResponse.json(
-      { error: '登录过程中发生错误' },
+      { error: 'An error occurred during login' },
       { status: 500 }
     );
   }
