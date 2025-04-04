@@ -4,37 +4,37 @@ import { getUserFromRequest, sanitizeUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    // 从请求中获取用户信息
+    // Get user information from request
     const currentUser = getUserFromRequest(request);
     
     if (!currentUser) {
       return NextResponse.json(
-        { error: '未授权，请先登录' },
+        { error: 'Unauthorized, please login first' },
         { status: 401 }
       );
     }
     
-    // 从数据库获取最新的用户信息
+    // Get latest user information from database
     const user = await prisma.user.findUnique({
       where: { id: currentUser.id }
     });
     
     if (!user) {
       return NextResponse.json(
-        { error: '用户不存在' },
+        { error: 'User not found' },
         { status: 404 }
       );
     }
     
-    // 返回用户信息（不包含密码）
+    // Return user information (without password)
     return NextResponse.json({
       user: sanitizeUser(user)
     });
     
   } catch (error) {
-    console.error('获取用户信息错误:', error);
+    console.error('Error getting user information:', error);
     return NextResponse.json(
-      { error: '获取用户信息时发生错误' },
+      { error: 'An error occurred while fetching user information' },
       { status: 500 }
     );
   }

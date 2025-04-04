@@ -32,7 +32,7 @@ export default function ProfilePage() {
     const fetchUserData = async () => {
       setIsLoading(true);
       
-      const token = localStorage.getItem('userToken');
+      const token = localStorage.getItem('token');
       if (!token) {
         router.push('/login');
         return;
