@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ui/toast';
 import { parseToken, publishAuthChange } from '@/utils/auth';
 import { LoadingSpinner } from '@/components/ui/loading';
+import styles from './page.module.css';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -92,11 +93,11 @@ export default function AuthCallback() {
   }, [router, searchParams]); // Keep toast out of dependencies
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
-      <div className="p-8 bg-white rounded-xl shadow-lg text-center max-w-md w-full mx-auto transform transition-all duration-300 hover:shadow-xl">
+    <div className={styles.container}>
+      <div className={styles.card}>
         <LoadingSpinner size="lg" text={status} />
         
-        <p className="text-gray-600 mt-6">
+        <p className={styles.redirectText}>
           You'll be redirected automatically once the process is complete.
         </p>
       </div>
