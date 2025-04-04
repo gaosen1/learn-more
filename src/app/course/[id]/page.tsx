@@ -11,6 +11,7 @@ import styles from './page.module.css';
 interface Lesson {
   id: string;
   title: string;
+  content?: string;
   completed?: boolean;
 }
 
@@ -24,9 +25,13 @@ interface Course {
   completedLessons: number;
   category: string;
   author: string;
+  authorId: string;
+  authorAvatar?: string;
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
+  isEnrolled?: boolean;
+  isAuthor?: boolean;
 }
 
 export default function CoursePage() {
@@ -69,21 +74,40 @@ export default function CoursePage() {
     setCurrentLessonIndex(index);
   };
 
-  const markLessonComplete = (index: number) => {
+  const markLessonComplete = async (index: number) => {
     if (!course) return;
     
-    const updatedLessons = [...course.lessons];
-    updatedLessons[index] = {
-      ...updatedLessons[index],
-      completed: true
-    };
-    
-    setCourse({
-      ...course,
-      lessons: updatedLessons,
-      completedLessons: course.completedLessons + 1,
-      progress: Math.round(((course.completedLessons + 1) / course.lessons.length) * 100)
-    });
+    try {
+      // 调用API标记课程章节为已完成
+      const response = await fetch(`/api/courses/${course.id}/complete-lesson`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lessonId: course.lessons[index].id }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to mark lesson as complete');
+      }
+      
+      // 更新本地状态
+      const updatedLessons = [...course.lessons];
+      updatedLessons[index] = {
+        ...updatedLessons[index],
+        completed: true
+      };
+      
+      setCourse({
+        ...course,
+        lessons: updatedLessons,
+        completedLessons: course.completedLessons + 1,
+        progress: Math.round(((course.completedLessons + 1) / course.lessons.length) * 100)
+      });
+    } catch (err) {
+      console.error('Error marking lesson as complete:', err);
+      // 可以添加错误提示
+    }
   };
 
   // 获取课程分享URL
@@ -270,22 +294,26 @@ export default function CoursePage() {
                 </h2>
               </div>
               <div className={styles.lessonBody}>
-                <div className={styles.placeholderContent}>
-                  <h3>Lesson Content</h3>
-                  <p>
-                    This is a sample lesson content. In a complete implementation, this would contain the actual lesson material, which could include text, images, videos, and interactive elements.
-                  </p>
-                  
-                  <div className={styles.sampleContent}>
-                    <h4>Key Points:</h4>
-                    <ul>
-                      <li>First important concept of this lesson</li>
-                      <li>Second important concept with relevant examples</li>
-                      <li>Practical application of the concepts covered</li>
-                      <li>Summary of what was learned</li>
-                    </ul>
+                {currentLesson.content ? (
+                  <div dangerouslySetInnerHTML={{ __html: currentLesson.content }} />
+                ) : (
+                  <div className={styles.placeholderContent}>
+                    <h3>Lesson Content</h3>
+                    <p>
+                      This is a sample lesson content. In a complete implementation, this would contain the actual lesson material, which could include text, images, videos, and interactive elements.
+                    </p>
+                    
+                    <div className={styles.sampleContent}>
+                      <h4>Key Points:</h4>
+                      <ul>
+                        <li>First important concept of this lesson</li>
+                        <li>Second important concept with relevant examples</li>
+                        <li>Practical application of the concepts covered</li>
+                        <li>Summary of what was learned</li>
+                      </ul>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               
               <div className={styles.lessonNavigation}>
@@ -297,18 +325,18 @@ export default function CoursePage() {
                   Previous Lesson
                 </button>
                 
-                {!currentLesson.completed ? (
+                {!currentLesson.completed && course.isEnrolled ? (
                   <button 
                     className={`${styles.navigationButton} ${styles.completeButton}`}
                     onClick={() => markLessonComplete(currentLessonIndex)}
                   >
                     Mark as Complete
                   </button>
-                ) : (
+                ) : currentLesson.completed ? (
                   <span className={styles.lessonCompletedMessage}>
                     Lesson completed!
                   </span>
-                )}
+                ) : null}
                 
                 <button 
                   className={styles.navigationButton}
