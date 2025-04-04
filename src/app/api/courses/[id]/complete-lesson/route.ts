@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 
-// 标记课程章节为已完成
-export async function POST(request, { params }) {
+// Mark lesson as completed
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const courseId = params.id;
     const currentUser = getUserFromRequest(request);
     
-    // 验证用户是否已登录
+    // Verify if user is logged in
     if (!currentUser) {
       return NextResponse.json(
         { error: 'Unauthorized, please login first' },
@@ -16,7 +16,7 @@ export async function POST(request, { params }) {
       );
     }
     
-    // 获取请求体中的课程章节ID
+    // Get lesson ID from request body
     const { lessonId } = await request.json();
     
     if (!lessonId) {
@@ -26,7 +26,7 @@ export async function POST(request, { params }) {
       );
     }
     
-    // 验证课程章节是否存在
+    // Verify if lesson exists
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
       include: {
@@ -41,7 +41,7 @@ export async function POST(request, { params }) {
       );
     }
     
-    // 确保章节属于指定的课程
+    // Ensure lesson belongs to the specified course
     if (lesson.courseId !== courseId) {
       return NextResponse.json(
         { error: 'Lesson does not belong to this course' },
@@ -49,7 +49,7 @@ export async function POST(request, { params }) {
       );
     }
     
-    // 查找用户的课程注册记录
+    // Find user's course enrollment record
     let userCourse = await prisma.userCourse.findUnique({
       where: {
         userId_courseId: {
@@ -59,7 +59,7 @@ export async function POST(request, { params }) {
       }
     });
     
-    // 如果用户未注册课程，先创建注册记录
+    // If user is not enrolled in the course, create enrollment record
     if (!userCourse) {
       userCourse = await prisma.userCourse.create({
         data: {
@@ -72,25 +72,25 @@ export async function POST(request, { params }) {
       });
     }
     
-    // 解析已完成的课程章节ID列表
+    // Parse completed lesson IDs list
     const completedLessonIds = JSON.parse(userCourse.completedLessonIds || '[]');
     
-    // 检查章节是否已经标记为完成
+    // Check if lesson is already marked as complete
     if (completedLessonIds.includes(lessonId)) {
       return NextResponse.json(
         { message: 'Lesson already marked as complete' }
       );
     }
     
-    // 添加新完成的章节ID
+    // Add newly completed lesson ID
     completedLessonIds.push(lessonId);
     
-    // 查询课程的总章节数
+    // Query total number of lessons in the course
     const totalLessons = await prisma.lesson.count({
       where: { courseId: courseId }
     });
     
-    // 更新用户课程进度
+    // Update user course progress
     const updatedUserCourse = await prisma.userCourse.update({
       where: {
         userId_courseId: {

@@ -5,33 +5,33 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * 此脚本用于确保数据库在项目启动前已经准备好:
- * 1. 检查数据库连接
- * 2. 运行必要的迁移
- * 3. 执行种子脚本（如果需要）
+ * This script ensures the database is ready before the project starts:
+ * 1. Check database connection
+ * 2. Run necessary migrations
+ * 3. Execute seed script (if needed)
  */
 
 console.log('🔄 Checking database setup...');
 
 try {
-  // 检查是否需要创建migrations目录
+  // Check if migrations directory needs to be created
   const migrationsDir = path.join(__dirname, '../prisma/migrations');
   if (!fs.existsSync(migrationsDir)) {
     fs.mkdirSync(migrationsDir, { recursive: true });
     console.log('✅ Created migrations directory');
   }
 
-  // 运行Prisma迁移（如果有更改）
+  // Run Prisma migrations (if there are changes)
   console.log('🔄 Running database migrations...');
   execSync('npx prisma migrate dev --name init', { stdio: 'inherit' });
   console.log('✅ Database migrations applied');
 
-  // 生成Prisma客户端
+  // Generate Prisma client
   console.log('🔄 Generating Prisma client...');
   execSync('npx prisma generate', { stdio: 'inherit' });
   console.log('✅ Prisma client generated');
 
-  // 执行种子脚本
+  // Execute seed script
   console.log('🔄 Seeding database...');
   execSync('npx prisma db seed', { stdio: 'inherit' });
   console.log('✅ Database seeded successfully');

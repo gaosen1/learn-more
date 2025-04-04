@@ -17,70 +17,6 @@ interface Course {
   lessonsCount: number;
 }
 
-// Sample course data
-const sampleCourses: Course[] = [
-  {
-    id: '1',
-    title: 'Web Development Basics',
-    description: 'Learn the fundamentals of HTML, CSS, and JavaScript to build responsive websites from scratch.',
-    imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97',
-    category: 'Web Development',
-    author: 'Jane Smith',
-    createdAt: '2023-05-15',
-    lessonsCount: 12
-  },
-  {
-    id: '2',
-    title: 'Python Programming for Beginners',
-    description: 'A comprehensive introduction to Python programming language with practical exercises and projects.',
-    imageUrl: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4',
-    category: 'Programming',
-    author: 'John Doe',
-    createdAt: '2023-04-10',
-    lessonsCount: 10
-  },
-  {
-    id: '3',
-    title: 'Data Structures and Algorithms',
-    description: 'Understand and implement common data structures and algorithms to solve complex programming challenges.',
-    imageUrl: 'https://images.unsplash.com/photo-1649180556628-9ba704115795',
-    category: 'Computer Science',
-    author: 'Alex Johnson',
-    createdAt: '2023-06-20',
-    lessonsCount: 15
-  },
-  {
-    id: '4',
-    title: 'UI/UX Design Principles',
-    description: 'Master the fundamentals of user interface and user experience design to create intuitive and engaging applications.',
-    imageUrl: 'https://images.unsplash.com/photo-1559028012-481c04fa702d',
-    category: 'Design',
-    author: 'Emma Wilson',
-    createdAt: '2023-03-05',
-    lessonsCount: 8
-  },
-  {
-    id: '5',
-    title: 'Machine Learning Fundamentals',
-    description: 'Introduction to machine learning concepts, algorithms, and practical applications using Python.',
-    imageUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c',
-    category: 'Data Science',
-    author: 'Michael Brown',
-    createdAt: '2023-07-12',
-    lessonsCount: 14
-  },
-  {
-    id: '6',
-    title: 'Mobile App Development with React Native',
-    description: 'Build cross-platform mobile applications using React Native framework and JavaScript.',
-    imageUrl: 'https://images.unsplash.com/photo-1617040619263-41c5a9ca7521',
-    category: 'Mobile Development',
-    author: 'Sarah Parker',
-    createdAt: '2023-02-28',
-    lessonsCount: 11
-  }
-];
-
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,16 +27,33 @@ export default function CoursesPage() {
   const categories = ['All', 'Web Development', 'Programming', 'Computer Science', 'Design', 'Data Science', 'Mobile Development'];
 
   useEffect(() => {
-    // Simulate API call to fetch courses
+    // Fetch courses from API
     const fetchCourses = async () => {
       try {
-        // In a real application, this would be an API call
-        setTimeout(() => {
-          setCourses(sampleCourses);
-          setLoading(false);
-        }, 800);
+        setLoading(true);
+        const response = await fetch('/api/courses');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch courses');
+        }
+        
+        const data = await response.json();
+        // Format API response data to match Course interface
+        const formattedCourses = data.map(course => ({
+          id: course.id,
+          title: course.title,
+          description: course.description,
+          imageUrl: course.imageUrl,
+          category: course.category,
+          author: course.author,
+          createdAt: course.createdAt,
+          lessonsCount: course.lessons.length
+        }));
+        
+        setCourses(formattedCourses);
       } catch (error) {
         console.error('Error fetching courses:', error);
+      } finally {
         setLoading(false);
       }
     };

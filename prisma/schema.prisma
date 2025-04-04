@@ -16,7 +16,7 @@ datasource db {
 
 // User Model
 model User {
-  id            String    @id @default(uuid())
+  id            Int       @id @default(autoincrement())
   email         String    @unique
   password      String
   name          String
@@ -25,20 +25,20 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
-  // 关系
+  // Relations
   createdCourses Course[]  @relation("CourseAuthor")
   enrolledCourses UserCourse[]
 }
 
-// 用户角色枚举
+// User role enum
 enum UserRole {
   STUDENT
   EDUCATOR
 }
 
-// 课程模型
+// Course model
 model Course {
-  id            String    @id @default(uuid())
+  id            Int       @id @default(autoincrement())
   title         String
   description   String
   imageUrl      String
@@ -47,42 +47,42 @@ model Course {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
-  // 关系
-  authorId      String
+  // Relations
+  authorId      Int
   author        User      @relation("CourseAuthor", fields: [authorId], references: [id])
   lessons       Lesson[]
   enrolledUsers UserCourse[]
 }
 
-// 课程-用户关系（用于记录注册课程和进度）
+// Course-User relation (for tracking course enrollment and progress)
 model UserCourse {
-  id            String    @id @default(uuid())
-  userId        String
-  courseId      String
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  courseId      Int
   progress      Int       @default(0)
   completedLessons Int    @default(0)
   enrolledAt    DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
-  // 关系
+  // Relations
   user          User      @relation(fields: [userId], references: [id])
   course        Course    @relation(fields: [courseId], references: [id])
-  completedLessonIds String // 存储为JSON字符串
+  completedLessonIds String // Stored as JSON string
   
-  // 复合唯一约束，确保用户不会多次注册同一课程
+  // Compound unique constraint to ensure a user doesn't enroll in the same course multiple times
   @@unique([userId, courseId])
 }
 
-// 课程章节模型
+// Course lesson model
 model Lesson {
-  id            String    @id @default(uuid())
+  id            Int       @id @default(autoincrement())
   title         String
   content       String?   @default("")
   order         Int
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
-  // 关系
-  courseId      String
+  // Relations
+  courseId      Int
   course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }

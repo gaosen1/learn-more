@@ -9,14 +9,14 @@ import MainLayout from '@/components/layout/MainLayout';
 import styles from './page.module.css';
 
 interface Lesson {
-  id: string;
+  id: number;
   title: string;
   content?: string;
   completed?: boolean;
 }
 
 interface Course {
-  id: string;
+  id: number;
   title: string;
   description: string;
   imageUrl: string;
@@ -25,7 +25,7 @@ interface Course {
   completedLessons: number;
   category: string;
   author: string;
-  authorId: string;
+  authorId: number;
   authorAvatar?: string;
   createdAt: string;
   updatedAt: string;
@@ -48,11 +48,22 @@ export default function CoursePage() {
       setIsLoading(true);
       setError(null);
       
+      if (!params.id) {
+        setError("Course ID is missing");
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const response = await fetch(`/api/courses/${params.id}`);
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch course: ${response.statusText}`);
+          if (response.status === 404) {
+            throw new Error(`Course not found. The course with ID ${params.id} does not exist.`);
+          } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Failed to fetch course: ${response.statusText}`);
+          }
         }
         
         const data = await response.json();
@@ -65,9 +76,7 @@ export default function CoursePage() {
       }
     };
 
-    if (params.id) {
-      fetchCourseData();
-    }
+    fetchCourseData();
   }, [params.id]);
 
   const handleLessonClick = (index: number) => {
@@ -78,7 +87,7 @@ export default function CoursePage() {
     if (!course) return;
     
     try {
-      // 调用API标记课程章节为已完成
+      // Call API to mark lesson as complete
       const response = await fetch(`/api/courses/${course.id}/complete-lesson`, {
         method: 'POST',
         headers: {
@@ -91,7 +100,7 @@ export default function CoursePage() {
         throw new Error('Failed to mark lesson as complete');
       }
       
-      // 更新本地状态
+      // Update local state
       const updatedLessons = [...course.lessons];
       updatedLessons[index] = {
         ...updatedLessons[index],
@@ -106,44 +115,44 @@ export default function CoursePage() {
       });
     } catch (err) {
       console.error('Error marking lesson as complete:', err);
-      // 可以添加错误提示
+      // You could add an error notification here
     }
   };
 
-  // 获取课程分享URL
+  // Get course share URL
   const getCourseShareUrl = () => {
     return typeof window !== 'undefined' 
       ? `${window.location.origin}/course/${params.id}`
       : '';
   };
 
-  // 下载二维码图片
+  // Download QR code image
   const downloadQRCode = () => {
     const svg = document.getElementById("course-qr-code");
     if (!svg) return;
     
-    // 创建Canvas以将SVG转为PNG
+    // Create canvas to convert SVG to PNG
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
-    // 设置Canvas大小与QR码相同
+    // Set canvas size to match QR code
     canvas.width = 256;
     canvas.height = 256;
     
-    // 创建图片元素
+    // Create image element
     const img = document.createElement("img");
     const svgData = new XMLSerializer().serializeToString(svg);
     const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(svgBlob);
     
     img.onload = () => {
-      // 在Canvas上绘制图像
+      // Draw image on canvas
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       
-      // 转换Canvas为PNG并下载
+      // Convert canvas to PNG and download
       const pngUrl = canvas.toDataURL("image/png");
       const downloadLink = document.createElement("a");
       downloadLink.href = pngUrl;
@@ -157,7 +166,7 @@ export default function CoursePage() {
     img.src = url;
   };
 
-  // 切换二维码显示状态
+  // Toggle QR code display
   const toggleQRCode = () => {
     setShowQRCode(!showQRCode);
   };
@@ -181,8 +190,8 @@ export default function CoursePage() {
           <p className={styles.errorMessage}>
             {error || 'Unable to load the course. Please try again later.'}
           </p>
-          <Link href="/dashboard">
-            <button className={styles.button}>Back to Dashboard</button>
+          <Link href="/courses">
+            <button className={styles.button}>Back to Courses</button>
           </Link>
         </div>
       </MainLayout>

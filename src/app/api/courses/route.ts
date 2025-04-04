@@ -88,15 +88,15 @@ const sampleCourses = [
   }
 ];
 
-// 获取所有公开课程或用户有权访问的课程
+// Get all public courses or courses the user has access to
 export async function GET(request: NextRequest) {
   try {
     const currentUser = getUserFromRequest(request);
     
-    // 查询条件：公开课程或用户为课程作者
+    // Query condition: public courses or courses authored by the user
     let whereClause: any = { isPublic: true };
     
-    // 如果用户已登录，包含其创建的非公开课程
+    // If user is logged in, include their non-public courses
     if (currentUser) {
       whereClause = {
         OR: [
@@ -134,12 +134,12 @@ export async function GET(request: NextRequest) {
       }
     });
     
-    // 转换课程数据以适应前端结构
+    // Convert course data to fit frontend structure
     const formattedCourses = courses.map(course => {
       const lessonCount = course.lessons.length;
       const enrolledUserCount = course.enrolledUsers.length;
       
-      // 查找当前用户注册信息（如果已登录）
+      // Find current user's enrollment information (if logged in)
       const userEnrollment = currentUser
         ? course.enrolledUsers.find(enrollment => enrollment.userId === currentUser.id)
         : null;
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
           id: lesson.id,
           title: lesson.title,
           completed: userEnrollment 
-            ? JSON.parse(userEnrollment.completedLessonIds).includes(lesson.id)
+            ? JSON.parse(userEnrollment.completedLessonIds || '[]').includes(lesson.id)
             : false
         })),
         progress: userEnrollment ? userEnrollment.progress : 0,
@@ -172,31 +172,31 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(formattedCourses);
     
   } catch (error) {
-    console.error('获取课程错误:', error);
+    console.error('Error fetching courses:', error);
     return NextResponse.json(
-      { error: '获取课程列表时发生错误' },
+      { error: 'An error occurred while fetching courses' },
       { status: 500 }
     );
   }
 }
 
-// 创建新课程（仅教育者角色）
+// Create new course (educator role only)
 export async function POST(request: NextRequest) {
   try {
     const currentUser = getUserFromRequest(request);
     
-    // 验证用户是否已登录且为教育者
+    // Verify if user is logged in and is an educator
     if (!currentUser) {
       return NextResponse.json(
-        { error: '未授权，请先登录' },
+        { error: 'Unauthorized, please login first' },
         { status: 401 }
       );
     }
     
-    // 验证用户角色是否为教育者
+    // Verify if user's role is educator
     if (!isEducator(currentUser)) {
       return NextResponse.json(
-        { error: '只有教育者可以创建课程' },
+        { error: 'Only educators can create courses' },
         { status: 403 }
       );
     }
@@ -204,15 +204,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, description, imageUrl, category, isPublic = false, lessons = [] } = body;
     
-    // 验证必填字段
+    // Validate required fields
     if (!title || !description || !imageUrl || !category) {
       return NextResponse.json(
-        { error: '标题、描述、图片和分类为必填项' },
+        { error: 'Title, description, image and category are required' },
         { status: 400 }
       );
     }
     
-    // 创建新课程及相关课程章节
+    // Create new course and related lessons
     const newCourse = await prisma.course.create({
       data: {
         title,
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
       }
     });
     
-    // 格式化响应数据
+    // Format response data
     const formattedCourse = {
       id: newCourse.id,
       title: newCourse.title,
@@ -272,9 +272,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(formattedCourse, { status: 201 });
     
   } catch (error) {
-    console.error('创建课程错误:', error);
+    console.error('Error creating course:', error);
     return NextResponse.json(
-      { error: '创建课程时发生错误' },
+      { error: 'An error occurred while creating the course' },
       { status: 500 }
     );
   }

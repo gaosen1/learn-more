@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest, isEducator } from '@/lib/auth';
 
-// 获取单个课程详情
-export async function GET(request, { params }) {
+// Get a single course detail
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const currentUser = getUserFromRequest(request);
     const courseId = params.id;
     
-    // 获取课程详情，包括作者和课程章节
+    // Get course details, including author and course chapters
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
@@ -29,29 +29,29 @@ export async function GET(request, { params }) {
       }
     });
     
-    // 课程不存在
+    // Course does not exist
     if (!course) {
       return NextResponse.json(
-        { error: '课程不存在' },
+        { error: 'Course not found' },
         { status: 404 }
       );
     }
     
-    // 检查课程访问权限
+    // Check course access permission
     const isAuthor = currentUser && course.authorId === currentUser.id;
     if (!course.isPublic && !isAuthor) {
       return NextResponse.json(
-        { error: '无权访问此课程' },
+        { error: 'No permission to access this course' },
         { status: 403 }
       );
     }
     
-    // 查找当前用户的注册信息
+    // Find current user's enrollment information
     const userEnrollment = currentUser
       ? course.enrolledUsers.find(enrollment => enrollment.userId === currentUser.id)
       : null;
     
-    // 格式化响应数据
+    // Format response data
     const formattedCourse = {
       id: course.id,
       title: course.title,
@@ -81,54 +81,54 @@ export async function GET(request, { params }) {
     return NextResponse.json(formattedCourse);
     
   } catch (error) {
-    console.error('获取课程详情错误:', error);
+    console.error('Error fetching course details:', error);
     return NextResponse.json(
-      { error: '获取课程详情时发生错误' },
+      { error: 'An error occurred while fetching course details' },
       { status: 500 }
     );
   }
 }
 
-// 更新课程信息（仅教育者可修改自己的课程）
-export async function PUT(request, { params }) {
+// Update course information (only educators can modify their own courses)
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const currentUser = getUserFromRequest(request);
     const courseId = params.id;
     
-    // 验证用户是否已登录且为教育者
+    // Verify if the user is logged in and is an educator
     if (!currentUser) {
       return NextResponse.json(
-        { error: '未授权，请先登录' },
+        { error: 'Unauthorized, please login first' },
         { status: 401 }
       );
     }
     
-    // 验证用户角色是否为教育者
+    // Verify if the user's role is educator
     if (!isEducator(currentUser)) {
       return NextResponse.json(
-        { error: '只有教育者可以编辑课程' },
+        { error: 'Only educators can edit courses' },
         { status: 403 }
       );
     }
     
-    // 查找课程
+    // Find the course
     const existingCourse = await prisma.course.findUnique({
       where: { id: courseId },
       include: { lessons: true }
     });
     
-    // 课程不存在
+    // Course does not exist
     if (!existingCourse) {
       return NextResponse.json(
-        { error: '课程不存在' },
+        { error: 'Course not found' },
         { status: 404 }
       );
     }
     
-    // 验证是否为课程作者
+    // Verify if the user is the course author
     if (existingCourse.authorId !== currentUser.id) {
       return NextResponse.json(
-        { error: '只有课程作者可以编辑该课程' },
+        { error: 'Only the course author can edit this course' },
         { status: 403 }
       );
     }
@@ -136,7 +136,7 @@ export async function PUT(request, { params }) {
     const body = await request.json();
     const { title, description, imageUrl, category, isPublic, lessons } = body;
     
-    // 更新课程基本信息
+    // Update course basic information
     const updatedCourse = await prisma.course.update({
       where: { id: courseId },
       data: {
@@ -157,16 +157,16 @@ export async function PUT(request, { params }) {
       }
     });
     
-    // 如果提供了课程章节数据，更新课程章节
+    // If lesson data is provided, update course lessons
     if (lessons && lessons.length > 0) {
-      // 获取现有课程章节ID列表
+      // Get the list of existing lesson IDs
       const existingLessonIds = existingCourse.lessons.map(lesson => lesson.id);
       
-      // 找出需要删除的课程章节
+      // Find the lessons that need to be deleted
       const updatedLessonIds = lessons.filter((l: any) => l.id).map((l: any) => l.id);
       const lessonsToDelete = existingLessonIds.filter(id => !updatedLessonIds.includes(id));
       
-      // 删除不再需要的课程章节
+      // Delete lessons that are no longer needed
       if (lessonsToDelete.length > 0) {
         await prisma.lesson.deleteMany({
           where: {
@@ -175,12 +175,12 @@ export async function PUT(request, { params }) {
         });
       }
       
-      // 更新或创建课程章节
+      // Update or create course lessons
       for (let i = 0; i < lessons.length; i++) {
         const lesson = lessons[i];
         
         if (lesson.id) {
-          // 更新现有课程章节
+          // Update existing lesson
           await prisma.lesson.update({
             where: { id: lesson.id },
             data: {
@@ -190,7 +190,7 @@ export async function PUT(request, { params }) {
             }
           });
         } else {
-          // 创建新课程章节
+          // Create new lesson
           await prisma.lesson.create({
             data: {
               title: lesson.title,
@@ -203,7 +203,7 @@ export async function PUT(request, { params }) {
       }
     }
     
-    // 获取更新后的完整课程信息
+    // Get updated complete course information
     const finalCourse = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
@@ -228,12 +228,12 @@ export async function PUT(request, { params }) {
     
     if (!finalCourse) {
       return NextResponse.json(
-        { error: '获取更新后课程信息失败' },
+        { error: 'Failed to get updated course information' },
         { status: 500 }
       );
     }
     
-    // 格式化响应数据
+    // Format response data
     const userEnrollment = finalCourse.enrolledUsers[0];
     const formattedCourse = {
       id: finalCourse.id,
@@ -264,71 +264,71 @@ export async function PUT(request, { params }) {
     return NextResponse.json(formattedCourse);
     
   } catch (error) {
-    console.error('更新课程错误:', error);
+    console.error('Error updating course:', error);
     return NextResponse.json(
-      { error: '更新课程时发生错误' },
+      { error: 'An error occurred while updating the course' },
       { status: 500 }
     );
   }
 }
 
-// 删除课程（仅教育者可删除自己的课程）
+// Delete course (only educators can delete their own courses)
 export async function DELETE(request, { params }) {
   try {
     const currentUser = getUserFromRequest(request);
     const courseId = params.id;
     
-    // 验证用户是否已登录且为教育者
+    // Verify if the user is logged in and is an educator
     if (!currentUser) {
       return NextResponse.json(
-        { error: '未授权，请先登录' },
+        { error: 'Unauthorized, please login first' },
         { status: 401 }
       );
     }
     
-    // 验证用户角色是否为教育者
+    // Verify if the user's role is educator
     if (!isEducator(currentUser)) {
       return NextResponse.json(
-        { error: '只有教育者可以删除课程' },
+        { error: 'Only educators can delete courses' },
         { status: 403 }
       );
     }
     
-    // 查找课程
+    // Find the course
     const existingCourse = await prisma.course.findUnique({
       where: { id: courseId }
     });
     
-    // 课程不存在
+    // Course does not exist
     if (!existingCourse) {
       return NextResponse.json(
-        { error: '课程不存在' },
+        { error: 'Course not found' },
         { status: 404 }
       );
     }
     
-    // 验证是否为课程作者
+    // Verify if the user is the course author
     if (existingCourse.authorId !== currentUser.id) {
       return NextResponse.json(
-        { error: '只有课程作者可以删除该课程' },
+        { error: 'Only the course author can delete this course' },
         { status: 403 }
       );
     }
     
-    // 删除课程（级联删除相关章节和注册记录）
+    // Delete the course (cascade delete related lessons and enrollment records)
     await prisma.course.delete({
       where: { id: courseId }
     });
     
     return NextResponse.json(
-      { message: '课程已成功删除' },
+      { message: 'Course has been successfully deleted' },
       { status: 200 }
     );
     
   } catch (error) {
-    console.error('删除课程错误:', error);
+    console.error('Error deleting course:', error);
     return NextResponse.json(
-      { error: '删除课程时发生错误' },
+      { error: 'An error occurred while deleting the course' },
       { status: 500 }
     );
   }
