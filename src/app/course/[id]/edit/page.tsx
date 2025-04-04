@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import QRCode from 'react-qr-code';
 import MainLayout from '@/components/layout/MainLayout';
 import styles from './page.module.css';
 
@@ -33,9 +34,10 @@ export default function CourseEditPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'basic' | 'lessons' | 'settings'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'lessons' | 'settings' | 'share'>('basic');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [showQRCode, setShowQRCode] = useState(true);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -116,6 +118,53 @@ export default function CourseEditPage() {
     }
   };
 
+  // 获取课程分享URL
+  const getCourseShareUrl = () => {
+    return typeof window !== 'undefined' 
+      ? `${window.location.origin}/course/${params.id}`
+      : '';
+  };
+
+  // 下载二维码图片
+  const downloadQRCode = () => {
+    const svg = document.getElementById("course-qr-code");
+    if (!svg) return;
+    
+    // 创建Canvas以将SVG转为PNG
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    // 设置Canvas大小与QR码相同
+    canvas.width = 256;
+    canvas.height = 256;
+    
+    // 创建图片元素
+    const img = new Image();
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    
+    img.onload = () => {
+      // 在Canvas上绘制图像
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // 转换Canvas为PNG并下载
+      const pngUrl = canvas.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.href = pngUrl;
+      downloadLink.download = `${title || 'course'}-qrcode.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      URL.revokeObjectURL(url);
+    };
+    
+    img.src = url;
+  };
+
   // Add a new lesson
   const addLesson = () => {
     const newLesson: Lesson = {
@@ -163,7 +212,7 @@ export default function CourseEditPage() {
   };
 
   // Handle tab changes
-  const handleTabChange = (tab: 'basic' | 'lessons' | 'settings') => {
+  const handleTabChange = (tab: 'basic' | 'lessons' | 'settings' | 'share') => {
     setActiveTab(tab);
   };
 
@@ -231,6 +280,12 @@ export default function CourseEditPage() {
             onClick={() => handleTabChange('lessons')}
           >
             Lessons
+          </button>
+          <button 
+            className={`${styles.tabButton} ${activeTab === 'share' ? styles.activeTab : ''}`}
+            onClick={() => handleTabChange('share')}
+          >
+            Share & QR Code
           </button>
           <button 
             className={`${styles.tabButton} ${activeTab === 'settings' ? styles.activeTab : ''}`}
@@ -377,6 +432,58 @@ export default function CourseEditPage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'share' && (
+            <div className={styles.shareTab}>
+              <h3 className={styles.shareTitle}>Share Your Course</h3>
+              <p className={styles.shareDescription}>
+                Use this QR code to easily share your course with others. They can scan it with their phone camera to directly access the course.
+              </p>
+              
+              <div className={styles.qrCodeContainer}>
+                <QRCode
+                  id="course-qr-code"
+                  value={getCourseShareUrl()}
+                  size={250}
+                  level="H"
+                />
+                
+                <div className={styles.qrCodeInfo}>
+                  <p className={styles.qrCodeUrl}>
+                    <strong>Course URL:</strong> {getCourseShareUrl()}
+                  </p>
+                  
+                  <div className={styles.shareButtons}>
+                    <button 
+                      className={styles.downloadButton}
+                      onClick={downloadQRCode}
+                    >
+                      Download QR Code
+                    </button>
+                    
+                    <button 
+                      className={styles.copyLinkButton}
+                      onClick={() => {
+                        navigator.clipboard.writeText(getCourseShareUrl());
+                        alert('Course link copied to clipboard!');
+                      }}
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={styles.shareInstructions}>
+                <h4>How to use this QR code:</h4>
+                <ol>
+                  <li>Download the QR code image using the button above</li>
+                  <li>Include it in your presentations, handouts, or print materials</li>
+                  <li>Users can scan the code with their smartphone camera to directly access your course</li>
+                </ol>
+              </div>
             </div>
           )}
 

@@ -38,6 +38,64 @@
   color: var(--gray-600);
 }
 
+/* QR Code styles */
+.shareSection {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.shareButton {
+  padding: 0.625rem 1.25rem;
+  background-color: var(--primary-50);
+  color: var(--primary-600);
+  border: 1px solid var(--primary-200);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shareButton:hover {
+  background-color: var(--primary-100);
+  border-color: var(--primary-300);
+}
+
+.qrCodeContainer {
+  margin-top: 1.25rem;
+  padding: 1.5rem;
+  background-color: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 0.5rem;
+  display: inline-block;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.qrCodeCaption {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.downloadQRButton {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.downloadQRButton:hover {
+  background-color: var(--gray-200);
+  border-color: var(--gray-400);
+}
+
 .courseImage {
   margin-top: 1.5rem;
 }
@@ -261,6 +319,49 @@
   border-top: 1px solid var(--gray-200);
 }
 
+.navigationButton {
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--gray-300);
+  background-color: white;
+  color: var(--gray-700);
+  transition: all 0.2s ease;
+}
+
+.navigationButton:hover:not(:disabled) {
+  background-color: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.navigationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.completeButton {
+  background-color: var(--primary-600);
+  color: white;
+  border-color: var(--primary-600);
+}
+
+.completeButton:hover {
+  background-color: var(--primary-700);
+  border-color: var(--primary-700);
+}
+
+.lessonCompletedMessage {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  color: var(--primary-600);
+  background-color: var(--primary-50);
+  border-radius: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+}
+
 .loadingContainer {
   display: flex;
   flex-direction: column;
@@ -307,6 +408,22 @@
   color: var(--gray-600);
   margin-bottom: 2rem;
   max-width: 600px;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-600);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.button:hover {
+  background-color: var(--primary-700);
 }
 
 @media (min-width: 768px) {
