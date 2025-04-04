@@ -4,7 +4,7 @@ import { User, UserRole } from '@prisma/client';
 import { NextRequest } from 'next/server';
 
 // JWT密钥，应该存放在环境变量中
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-should-be-in-env';
+const JWT_SECRET = process.env.JWT_SECRET || 'gaosen';
 
 // 密码加密函数
 export async function hashPassword(password: string): Promise<string> {
