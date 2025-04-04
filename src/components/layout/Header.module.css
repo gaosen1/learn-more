@@ -46,7 +46,7 @@
 }
 
 .desktopNav {
-  display: flex;
+  display: none;
   margin-left: 2.5rem;
   align-items: center;
   gap: 1.75rem;
@@ -251,38 +251,21 @@
   padding-left: 1.25rem;
 }
 
-.mobileUserMenu {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
+/* Mobile menu styles */
 .mobileNavButton {
   display: flex;
-}
-
-.menuButton {
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  color: var(--gray-500);
+  color: var(--gray-700);
   cursor: pointer;
+  padding: 0.5rem;
+  margin-right: -0.5rem;
 }
 
-.menuButton:hover {
-  color: var(--gray-600);
-}
-
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+.mobileNavButton:hover {
+  color: var(--gray-900);
 }
 
 .menuIcon, .closeIcon {
@@ -293,29 +276,53 @@
 .mobileMenu {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 50;
 }
 
 .backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.3);
+  animation: backdropFade 0.3s ease-out forwards;
+}
+
+@keyframes backdropFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .mobileMenuContent {
   position: fixed;
   inset-y: 0;
   right: 0;
-  z-index: 40;
+  z-index: 50;
   width: 100%;
+  max-width: 300px;
   background-color: white;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .mobileMenuHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 1.5rem;
 }
 
 .closeButton {
@@ -323,34 +330,47 @@
   border: none;
   color: var(--gray-500);
   cursor: pointer;
+  padding: 0.5rem;
+  margin-right: -0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .closeButton:hover {
-  color: var(--gray-600);
+  color: var(--gray-900);
+  background-color: var(--gray-100);
 }
 
 .mobileMenuLinks {
-  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .navLinks {
   margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--gray-100);
+  padding-bottom: 1rem;
 }
 
 .mobileNavLink {
   display: block;
-  padding: 0.5rem 0;
-  font-size: 1rem;
+  padding: 0.75rem 0;
+  font-size: 1.1rem;
   font-weight: 500;
-  color: var(--gray-900);
+  color: var(--gray-800);
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .mobileNavLink:hover {
   color: var(--primary-600);
 }
 
-.mobileMenuFooter {
-  padding: 1.5rem 0;
+.activeMobileNavLink {
+  color: var(--primary-600);
+  font-weight: 600;
 }
 
 .mobileUserInfo {
@@ -358,13 +378,69 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 0;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   border-bottom: 1px solid var(--gray-100);
+}
+
+.mobileUserMenu {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.5rem;
+}
+
+.mobileLogoutButton {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #e53e3e;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.mobileAuthLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.mobileAuthLink {
+  display: block;
+  padding: 0.75rem 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  text-decoration: none;
+}
+
+.mobileSignupButton {
+  display: inline-block;
+  background-color: var(--primary-600);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.mobileSignupButton:hover {
+  background-color: var(--primary-700);
 }
 
 /* 隐藏移动端用户名，但显示桌面端用户名 */
 @media (max-width: 640px) {
   .userName {
+    display: none;
+  }
+  
+  .authLinks .navLink {
     display: none;
   }
 }
@@ -373,14 +449,29 @@
 @media (min-width: 768px) {
   .desktopNav {
     display: flex;
-    align-items: center;
   }
   
   .mobileNavButton {
     display: none;
   }
+}
+
+/* Small screens */
+@media (max-width: 767px) {
+  .authLinks .navLink {
+    display: none;
+  }
   
-  .mobileMenuContent {
-    max-width: 24rem;
+  .navContainer {
+    height: 60px;
+  }
+  
+  .logoText {
+    font-size: 1.25rem;
+  }
+  
+  .logoIcon {
+    height: 28px;
+    width: 28px;
   }
 } 
