@@ -3,10 +3,7 @@ import prisma from '@/lib/prisma';
 import { getUserFromRequest, isEducator } from '@/lib/auth';
 
 // 获取单个课程详情
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request, { params }) {
   try {
     const currentUser = getUserFromRequest(request);
     const courseId = params.id;
@@ -93,10 +90,7 @@ export async function GET(
 }
 
 // 更新课程信息（仅教育者可修改自己的课程）
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request, { params }) {
   try {
     const currentUser = getUserFromRequest(request);
     const courseId = params.id;
@@ -279,10 +273,7 @@ export async function PUT(
 }
 
 // 删除课程（仅教育者可删除自己的课程）
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request, { params }) {
   try {
     const currentUser = getUserFromRequest(request);
     const courseId = params.id;

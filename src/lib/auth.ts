@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User, UserRole } from '@prisma/client';
+import { NextRequest } from 'next/server';
 
 // JWT密钥，应该存放在环境变量中
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-should-be-in-env';
@@ -38,7 +39,7 @@ export function verifyToken(token: string): { id: string; email: string; role: U
 }
 
 // 从请求中提取用户信息
-export function getUserFromRequest(req: Request): { id: string; email: string; role: UserRole } | null {
+export function getUserFromRequest(req: NextRequest): { id: string; email: string; role: UserRole } | null {
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;

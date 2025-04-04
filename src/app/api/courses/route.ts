@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest, isEducator } from '@/lib/auth';
 
-// Sample course data
-export const courses = [
+// Sample course data - 现在设为常量，不导出
+const sampleCourses = [
   {
     id: '1',
     title: 'Web Development Basics',
