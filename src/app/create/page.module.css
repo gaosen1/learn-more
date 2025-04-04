@@ -1,0 +1,199 @@
+.createCourse {
+  padding: 3rem 0;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.stepsContainer {
+  margin-bottom: 3rem;
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stepNumber {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--gray-200);
+  color: var(--gray-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.step.active .stepNumber {
+  background-color: var(--primary-600);
+  color: white;
+}
+
+.stepLabel {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  transition: color 0.2s;
+}
+
+.step.active .stepLabel {
+  color: var(--gray-900);
+  font-weight: 500;
+}
+
+.stepDivider {
+  width: 80px;
+  height: 2px;
+  background-color: var(--gray-200);
+  margin: 0 10px;
+}
+
+.formContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  margin-bottom: 0.5rem;
+}
+
+.input, .textarea, .select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: white;
+}
+
+.input:focus, .textarea:focus, .select:focus {
+  outline: none;
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.checkbox {
+  margin-right: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.checkboxDescription {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin-top: 0.5rem;
+  margin-left: 1.75rem;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.sectionsEditor {
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.sectionDescription {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin-bottom: 1.5rem;
+}
+
+.sectionPlaceholder {
+  border: 2px dashed var(--gray-300);
+  border-radius: 0.5rem;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.sectionPlaceholder:hover {
+  border-color: var(--primary-400);
+  color: var(--primary-600);
+}
+
+.placeholderIcon {
+  margin-bottom: 1rem;
+}
+
+.summarySection {
+  background-color: var(--gray-50);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.summaryTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 1rem;
+}
+
+.summaryItem {
+  display: flex;
+  margin-bottom: 0.75rem;
+}
+
+.summaryLabel {
+  width: 100px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.summaryValue {
+  flex: 1;
+  color: var(--gray-900);
+} 

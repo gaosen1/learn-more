@@ -5,10 +5,10 @@ import Link from 'next/link';
 import styles from './Header.module.css';
 
 const navigation = [
-  { name: '首页', href: '/' },
-  { name: '我的课程', href: '/dashboard' },
-  { name: '创建课程', href: '/create' },
-  { name: '关于我们', href: '/about' },
+  { name: 'Home', href: '/' },
+  { name: 'My Courses', href: '/dashboard' },
+  { name: 'Create Course', href: '/create' },
+  { name: 'About', href: '/about' },
 ];
 
 export default function Header() {
@@ -41,7 +41,7 @@ export default function Header() {
               href="/login"
               className="btn btn-primary"
             >
-              登录
+              Login
             </Link>
           </div>
           <div className={styles.mobileNavButton}>
@@ -50,7 +50,7 @@ export default function Header() {
               className={styles.menuButton}
               onClick={() => setMobileMenuOpen(true)}
             >
-              <span className={styles.srOnly}>打开菜单</span>
+              <span className={styles.srOnly}>Open menu</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.menuIcon}>
                 <line x1="4" x2="20" y1="12" y2="12"></line>
                 <line x1="4" x2="20" y1="6" y2="6"></line>
@@ -79,7 +79,7 @@ export default function Header() {
                 className={styles.closeButton}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span className={styles.srOnly}>关闭菜单</span>
+                <span className={styles.srOnly}>Close menu</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.closeIcon}>
                   <path d="M18 6 6 18"></path>
                   <path d="m6 6 12 12"></path>
@@ -105,7 +105,7 @@ export default function Header() {
                   className="btn btn-primary"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  登录
+                  Login
                 </Link>
               </div>
             </div>

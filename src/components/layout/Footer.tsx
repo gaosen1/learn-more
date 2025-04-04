@@ -9,73 +9,73 @@ export default function Footer() {
           <div className={styles.column}>
             <h3 className={styles.heading}>LearnMore</h3>
             <p className={styles.description}>
-              创建、分享和跟踪在线课程的简单方式
+              A simple way to create, share, and track online courses
             </p>
           </div>
 
           <div className={styles.column}>
-            <h3 className={styles.heading}>产品</h3>
+            <h3 className={styles.heading}>Product</h3>
             <ul className={styles.linkList}>
               <li>
                 <Link href="/features" className={styles.link}>
-                  功能
+                  Features
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className={styles.link}>
-                  价格
+                  Pricing
                 </Link>
               </li>
               <li>
                 <Link href="/examples" className={styles.link}>
-                  示例
+                  Examples
                 </Link>
               </li>
             </ul>
           </div>
 
           <div className={styles.column}>
-            <h3 className={styles.heading}>支持</h3>
+            <h3 className={styles.heading}>Support</h3>
             <ul className={styles.linkList}>
               <li>
                 <Link href="/faq" className={styles.link}>
-                  常见问题
+                  FAQ
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className={styles.link}>
-                  联系我们
+                  Contact Us
                 </Link>
               </li>
               <li>
                 <Link href="/help" className={styles.link}>
-                  帮助中心
+                  Help Center
                 </Link>
               </li>
             </ul>
           </div>
 
           <div className={styles.column}>
-            <h3 className={styles.heading}>公司</h3>
+            <h3 className={styles.heading}>Company</h3>
             <ul className={styles.linkList}>
               <li>
                 <Link href="/about" className={styles.link}>
-                  关于我们
+                  About Us
                 </Link>
               </li>
               <li>
                 <Link href="/blog" className={styles.link}>
-                  博客
+                  Blog
                 </Link>
               </li>
               <li>
                 <Link href="/terms" className={styles.link}>
-                  服务条款
+                  Terms of Service
                 </Link>
               </li>
               <li>
                 <Link href="/privacy" className={styles.link}>
-                  隐私政策
+                  Privacy Policy
                 </Link>
               </li>
             </ul>
@@ -83,7 +83,7 @@ export default function Footer() {
         </div>
         <div className={styles.copyright}>
           <p>
-            &copy; {new Date().getFullYear()} LearnMore. 保留所有权利。
+            &copy; {new Date().getFullYear()} LearnMore. All rights reserved.
           </p>
         </div>
       </div>

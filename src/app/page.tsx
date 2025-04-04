@@ -9,23 +9,23 @@ export default function Home() {
       <div className={styles.hero}>
         <div className="container">
           <div className={styles.heroContent}>
-            <h1 className={styles.heroTitle}>交互式课程创建平台</h1>
+            <h1 className={styles.heroTitle}>Interactive Course Creation Platform</h1>
             <p className={styles.heroSubtitle}>
-              轻松创建、分享和跟踪在线课程的简单方式
+              Create, share, and track online courses with ease
             </p>
             <div className={styles.heroCta}>
               <Link href="/signup" className="btn btn-primary">
-                开始使用
+                Get Started
               </Link>
               <Link href="/features" className="btn btn-outline">
-                了解功能
+                Learn More
               </Link>
             </div>
           </div>
           <div className={styles.heroImage}>
             <Image
               src="/hero-image.png"
-              alt="LearnMore 平台预览"
+              alt="LearnMore Platform Preview"
               width={600}
               height={400}
               className={styles.image}
@@ -38,9 +38,9 @@ export default function Home() {
       <div className={styles.features}>
         <div className="container">
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>核心功能</h2>
+            <h2 className={styles.sectionTitle}>Core Features</h2>
             <p className={styles.sectionDescription}>
-              LearnMore 提供多种功能，满足各种教学需求
+              LearnMore offers a variety of features to meet your teaching needs
             </p>
           </div>
 
@@ -52,9 +52,9 @@ export default function Home() {
                   <polyline points="14 2 14 8 20 8"></polyline>
                 </svg>
               </div>
-              <h3 className={styles.featureTitle}>课程创建与管理</h3>
+              <h3 className={styles.featureTitle}>Course Creation & Management</h3>
               <p className={styles.featureDescription}>
-                直观的课程构建界面，支持多页面课程结构和媒体集成
+                Intuitive course builder interface with multi-page structure support
               </p>
             </div>
             
@@ -65,9 +65,9 @@ export default function Home() {
                   <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
                 </svg>
               </div>
-              <h3 className={styles.featureTitle}>QR码生成</h3>
+              <h3 className={styles.featureTitle}>QR Code Generation</h3>
               <p className={styles.featureDescription}>
-                生成打印QR码表格，轻松分享课程内容
+                Generate printable QR codes to easily share your course content
               </p>
             </div>
             
@@ -78,9 +78,9 @@ export default function Home() {
                   <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                 </svg>
               </div>
-              <h3 className={styles.featureTitle}>评估工具</h3>
+              <h3 className={styles.featureTitle}>Assessment Tools</h3>
               <p className={styles.featureDescription}>
-                在课程中嵌入各类测验问题，并跟踪表现分析
+                Embed quizzes throughout your course and track performance analytics
               </p>
             </div>
             
@@ -91,9 +91,9 @@ export default function Home() {
                   <polyline points="8 6 2 12 8 18"></polyline>
                 </svg>
               </div>
-              <h3 className={styles.featureTitle}>编程教育</h3>
+              <h3 className={styles.featureTitle}>Programming Education</h3>
               <p className={styles.featureDescription}>
-                通过可评分的编程练习直接在浏览器中运行Python和JavaScript代码
+                Run Python and JavaScript code directly in the browser with gradable exercises
               </p>
             </div>
           </div>
@@ -103,12 +103,12 @@ export default function Home() {
       <div className={styles.cta}>
         <div className="container">
           <div className={styles.ctaContent}>
-            <h2 className={styles.ctaTitle}>开始创建您的第一个课程</h2>
+            <h2 className={styles.ctaTitle}>Create Your First Course Today</h2>
             <p className={styles.ctaDescription}>
-              注册免费账户，立即体验LearnMore的强大功能
+              Sign up for a free account and experience the power of LearnMore
             </p>
             <Link href="/signup" className="btn btn-primary">
-              免费注册
+              Sign Up Free
             </Link>
           </div>
         </div>
