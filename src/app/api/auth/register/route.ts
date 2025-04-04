@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     // 验证必填字段
     if (!email || !password || !name) {
       return NextResponse.json(
-        { error: '邮箱、密码和姓名为必填项' },
+        { error: 'Email, password and name are required' },
         { status: 400 }
       );
     }
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: '请提供有效的邮箱地址' },
+        { error: 'Please provide a valid email address' },
         { status: 400 }
       );
     }
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // 检查密码长度
     if (password.length < 6) {
       return NextResponse.json(
-        { error: '密码长度必须至少为6个字符' },
+        { error: 'The password must be at least 6 characters long' },
         { status: 400 }
       );
     }
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     
     if (existingUser) {
       return NextResponse.json(
-        { error: '该邮箱已被注册' },
+        { error: 'The email address has been registered' },
         { status: 409 }
       );
     }
@@ -76,9 +76,9 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('注册错误:', error);
+    console.error('Registration error:', error);
     return NextResponse.json(
-      { error: '注册过程中发生错误' },
+      { error: 'Registration failed' },
       { status: 500 }
     );
   }

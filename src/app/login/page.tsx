@@ -1,13 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
 import styles from './page.module.css';
+import api from "@/utils/api";
+import { login, handleGitHubLogin } from "@/utils/auth";
+import { useToast } from "@/components/ui/toast";
+import { FaGithub } from "react-icons/fa";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 
 export default function Login() {
+  const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -15,6 +23,18 @@ export default function Login() {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // 检查URL中是否有错误参数
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      if (errorParam === 'github_auth_failed') {
+        setError('GitHub authentication failed. Please try again.');
+      } else {
+        setError('Authentication failed. Please try again.');
+      }
+    }
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -37,31 +57,32 @@ export default function Login() {
     }
 
     try {
-      // 在真实应用中，这里应该是登录API调用
-      // 这里我们模拟登录过程
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // 模拟登录成功
-      // 生成一个假的token并存储到localStorage
-      const fakeToken = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('userToken', fakeToken);
-      
-      // 如果勾选了"记住我"，可以设置更长时间的token有效期
-      if (formData.rememberMe) {
-        // 在实际应用中，可能需要设置token的过期时间或其他逻辑
-        localStorage.setItem('rememberMe', 'true');
-      }
-      
-      console.log('Login successful, token:', fakeToken);
-      
-      // 重定向到仪表板页面
-      router.push('/dashboard');
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('Login failed. Please check your credentials and try again.');
+      await login({
+        email: formData.email,
+        password: formData.password,
+      });
+      router.push('/');
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+        type: "success"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your email and password",
+        type: "error"
+      });
+      setError(error.message || "Invalid email or password");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 处理GitHub登录
+  const handleGitHubLoginClick = () => {
+    // 使用auth.ts中封装的GitHub登录函数
+    handleGitHubLogin();
   };
 
   return (
@@ -83,7 +104,7 @@ export default function Login() {
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className={styles.formGroup}>
                 <label htmlFor="email" className={styles.label}>Email</label>
-                <input
+                <Input
                   type="email"
                   id="email"
                   name="email"
@@ -97,7 +118,7 @@ export default function Login() {
               
               <div className={styles.formGroup}>
                 <label htmlFor="password" className={styles.label}>Password</label>
-                <input
+                <Input
                   type="password"
                   id="password"
                   name="password"
@@ -125,14 +146,33 @@ export default function Login() {
                 </Link>
               </div>
               
-              <button 
+              <Button 
                 type="submit" 
-                className={`btn btn-primary ${styles.submitButton}`}
+                className={`${styles.submitButton}`}
                 disabled={isLoading}
+                isLoading={isLoading}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
-              </button>
+                Login
+              </Button>
             </form>
+            
+            <div className={styles.socialLogin}>
+              <div className={styles.divider}>
+                <span className={styles.dividerText}>OR</span>
+              </div>
+              
+              <div className={styles.socialLoginContainer}>
+                <Button 
+                  className={styles.githubButton}
+                  onClick={handleGitHubLoginClick}
+                  type="button"
+                  variant="github"
+                >
+                  <FaGithub className={styles.githubIcon} />
+                  Continue with GitHub
+                </Button>
+              </div>
+            </div>
             
             <div className={styles.formFooter}>
               <p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
 
@@ -18,17 +18,66 @@ interface NavigationItem {
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: string;
+}
+
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // 在客户端检查用户登录状态
   useEffect(() => {
-    // 这里可以使用您的实际登录状态检查逻辑
-    // 例如：从localStorage或cookie中获取令牌
     const userToken = localStorage.getItem('userToken');
-    setIsLoggedIn(!!userToken);
+    
+    if (userToken) {
+      setIsLoggedIn(true);
+      fetchUserData(userToken);
+    }
   }, []);
+
+  // 添加点击外部关闭菜单的事件监听
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // 获取用户数据
+  const fetchUserData = async (token: string) => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        // 如果请求失败，可能是token无效
+        localStorage.removeItem('userToken');
+        setIsLoggedIn(false);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
 
   // 用户导航项，根据登录状态显示不同的导航项
   const userNavigation: NavigationItem[] = isLoggedIn 
@@ -45,9 +94,31 @@ export default function Header() {
     // 清除登录令牌
     localStorage.removeItem('userToken');
     setIsLoggedIn(false);
+    setUser(null);
     // 如果有需要，可以重定向到首页
     window.location.href = '/';
   }
+
+  // 获取用户头像或显示用户首字母
+  const renderUserAvatar = () => {
+    if (user?.avatar) {
+      return <img src={user.avatar} alt={user.name} className={styles.avatarImage} />;
+    } else if (user?.name) {
+      return <span className={styles.userInitials}>{user.name.charAt(0)}</span>;
+    } else {
+      return <span className={styles.userInitials}>U</span>;
+    }
+  };
+
+  // 切换用户菜单的显示状态
+  const toggleUserMenu = () => {
+    setUserMenuOpen(!userMenuOpen);
+  };
+
+  // 关闭用户菜单
+  const closeUserMenu = () => {
+    setUserMenuOpen(false);
+  };
 
   return (
     <header className={styles.header}>
@@ -73,22 +144,38 @@ export default function Header() {
               </Link>
             ))}
             {isLoggedIn ? (
-              <div className={styles.userMenu}>
-                <div className={styles.userAvatar}>
-                  <span className={styles.userInitials}>U</span>
+              <div className={styles.userMenu} ref={userMenuRef}>
+                <div 
+                  className={styles.userAvatar}
+                  onClick={toggleUserMenu}
+                >
+                  {renderUserAvatar()}
                 </div>
-                <div className={styles.userDropdown}>
-                  {userNavigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={styles.userDropdownLink}
-                      onClick={item.onClick}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
+                {userMenuOpen && (
+                  <div className={`${styles.userDropdown} ${styles.active}`}>
+                    {user && (
+                      <div className={styles.userInfo}>
+                        <span className={styles.userName}>{user.name}</span>
+                        <span className={styles.userEmail}>{user.email}</span>
+                      </div>
+                    )}
+                    {userNavigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={styles.userDropdownLink}
+                        onClick={(e) => {
+                          if (item.onClick) {
+                            item.onClick(e);
+                          }
+                          closeUserMenu();
+                        }}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <Link
@@ -157,6 +244,17 @@ export default function Header() {
               <div className={styles.mobileMenuFooter}>
                 {isLoggedIn ? (
                   <div className={styles.mobileUserMenu}>
+                    {user && (
+                      <div className={styles.mobileUserInfo}>
+                        <div className={styles.userAvatar}>
+                          {renderUserAvatar()}
+                        </div>
+                        <div>
+                          <span className={styles.userName}>{user.name}</span>
+                          <span className={styles.userEmail}>{user.email}</span>
+                        </div>
+                      </div>
+                    )}
                     {userNavigation.map((item) => (
                       <Link
                         key={item.name}

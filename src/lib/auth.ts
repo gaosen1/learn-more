@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User, UserRole } from '@prisma/client';
 import { NextRequest } from 'next/server';
 
-// JWT密钥，应该存放在环境变量中
+// 从环境变量获取JWT密钥
 const JWT_SECRET = process.env.JWT_SECRET || 'gaosen';
 
 // 密码加密函数
@@ -16,26 +16,41 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return await bcrypt.compare(password, hashedPassword);
 }
 
-// JWT生成函数
-export function generateToken(user: { id: string; email: string; role: UserRole }): string {
-  return jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+interface TokenPayload {
+  id: string;
+  email: string;
+  role: UserRole;
 }
 
-// JWT验证函数
-export function verifyToken(token: string): { id: string; email: string; role: UserRole } | null {
+/**
+ * 生成JWT令牌
+ */
+export function generateToken(payload: TokenPayload): string {
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: '30d' // 令牌30天后过期
+  });
+}
+
+/**
+ * 验证JWT令牌
+ */
+export function verifyToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: UserRole };
+    return jwt.verify(token, JWT_SECRET) as TokenPayload;
   } catch (error) {
     return null;
   }
+}
+
+/**
+ * 从请求头中提取令牌
+ */
+export function extractTokenFromHeader(authHeader: string | null): string | null {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  
+  return authHeader.substring(7); // 移除 'Bearer ' 前缀
 }
 
 // 从请求中提取用户信息

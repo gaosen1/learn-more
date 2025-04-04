@@ -70,6 +70,13 @@
   box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
 }
 
+.roleDesc {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  line-height: 1.4;
+}
+
 .terms {
   margin-bottom: 1.5rem;
 }

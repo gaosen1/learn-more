@@ -13,16 +13,17 @@ export default function Signup() {
     email: '',
     password: '',
     confirmPassword: '',
+    role: 'STUDENT', // 默认角色为学生
     agreeTerms: false
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     });
   };
 
@@ -51,22 +52,35 @@ export default function Signup() {
     }
 
     try {
-      // In a real app, this would be an API call to register the user
-      // For demo purposes, we'll simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 调用实际的注册API
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role // 使用用户选择的角色
+        }),
+      });
+
+      const data = await response.json();
       
-      // Simulate successful registration
-      // Generate a fake token and store it in localStorage
-      const fakeToken = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('userToken', fakeToken);
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
       
-      console.log('Registration successful, token:', fakeToken);
+      // 保存返回的token
+      localStorage.setItem('userToken', data.token);
+      console.log('Registration successful');
       
-      // Redirect to dashboard
+      // 重定向到仪表板
       router.push('/dashboard');
     } catch (error) {
       console.error('Registration error:', error);
-      setError('Registration failed. Please try again later.');
+      setError(error instanceof Error ? error.message : 'Registration failed. Please try again later.');
     } finally {
       setIsLoading(false);
     }
@@ -143,6 +157,25 @@ export default function Signup() {
                   placeholder="Confirm your password"
                   required
                 />
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label htmlFor="role" className={styles.label}>Account Type</label>
+                <select
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className={styles.input}
+                >
+                  <option value="STUDENT">Student</option>
+                  <option value="EDUCATOR">Educator</option>
+                </select>
+                <p className={styles.roleDesc}>
+                  {formData.role === 'STUDENT' 
+                    ? 'As a student, you can enroll in courses and track your learning progress.' 
+                    : 'As an educator, you can create and manage courses to share your knowledge.'}
+                </p>
               </div>
               
               <div className={styles.termsCheckbox}>
