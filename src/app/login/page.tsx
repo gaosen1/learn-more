@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
@@ -23,18 +23,24 @@ export default function Login() {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
 
-  // 检查URL中是否有错误参数
+  // Check for error parameter in URL
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam) {
       if (errorParam === 'github_auth_failed') {
         setError('GitHub authentication failed. Please try again.');
+        toast({
+          title: "GitHub Login Failed",
+          description: "There was a problem connecting to GitHub. Please try again later.",
+          type: "error"
+        });
       } else {
         setError('Authentication failed. Please try again.');
       }
     }
-  }, [searchParams]);
+  }, [searchParams, toast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -49,7 +55,7 @@ export default function Login() {
     setError('');
     setIsLoading(true);
 
-    // 基本验证
+    // Basic validation
     if (!formData.email || !formData.password) {
       setError('Please fill in all required fields');
       setIsLoading(false);
@@ -63,13 +69,13 @@ export default function Login() {
       });
       router.push('/');
       toast({
-        title: "Login successful",
+        title: "Login Successful",
         description: "Welcome back!",
         type: "success"
       });
     } catch (error: any) {
       toast({
-        title: "Login failed",
+        title: "Login Failed",
         description: error.message || "Please check your email and password",
         type: "error"
       });
@@ -79,11 +85,36 @@ export default function Login() {
     }
   };
 
-  // 处理GitHub登录
-  const handleGitHubLoginClick = () => {
-    // 使用auth.ts中封装的GitHub登录函数
-    handleGitHubLogin();
-  };
+  // Handle GitHub login with debounce and status tracking
+  const handleGitHubLoginClick = useCallback(() => {
+    if (isGithubLoading) return; // Prevent multiple clicks
+    
+    setIsGithubLoading(true);
+    setError('');
+    
+    toast({
+      title: "Connecting to GitHub",
+      description: "You'll be redirected to GitHub to authorize...",
+      type: "info"
+    });
+    
+    // Add a small delay to show loading state
+    setTimeout(() => {
+      try {
+        // Use auth.ts GitHub login function
+        handleGitHubLogin();
+      } catch (error) {
+        console.error("GitHub redirect error:", error);
+        setIsGithubLoading(false);
+        setError("Failed to connect to GitHub. Please try again.");
+        toast({
+          title: "GitHub Connection Error",
+          description: "Failed to start GitHub authentication flow",
+          type: "error"
+        });
+      }
+    }, 500);
+  }, [isGithubLoading, toast]);
 
   return (
     <MainLayout>
@@ -167,6 +198,8 @@ export default function Login() {
                   onClick={handleGitHubLoginClick}
                   type="button"
                   variant="github"
+                  disabled={isGithubLoading}
+                  isLoading={isGithubLoading}
                 >
                   <FaGithub className={styles.githubIcon} />
                   Continue with GitHub

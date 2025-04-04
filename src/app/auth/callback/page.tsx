@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ui/toast';
 
@@ -9,36 +9,50 @@ export default function AuthCallback() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const processedRef = useRef(false);
+  const errorShownRef = useRef(false);
 
   useEffect(() => {
+    // Prevent multiple executions of this effect
+    if (processedRef.current) return;
+    processedRef.current = true;
+    
     const token = searchParams.get('token');
     
     if (!token) {
-      toast({
-        title: 'Login failure',
-        description: 'Authentication token missing or invalid',
-        type: 'error'
-      });
-      router.push('/login?error=auth_failed');
+      if (!errorShownRef.current) {
+        errorShownRef.current = true;
+        toast({
+          title: 'Login failure',
+          description: 'Authentication token missing or invalid',
+          type: 'error'
+        });
+      }
+      
+      setTimeout(() => {
+        router.push('/login?error=auth_failed');
+      }, 100);
+      
       return;
     }
     
-    // 保存令牌到本地存储
+    // Save token to local storage
     localStorage.setItem('token', token);
     
-    // 可选：获取用户信息，但这里我们假设令牌已包含必要信息
+    if (!errorShownRef.current) {
+      errorShownRef.current = true;
+      toast({
+        title: 'Login successful',
+        description: 'You have successfully logged in via GitHub',
+        type: 'success'
+      });
+    }
     
-    // 显示成功消息
-    toast({
-      title: 'Login successful',
-      description: 'You have successfully logged in via GitHub',
-      type: 'success'
-    });
+    setTimeout(() => {
+      router.push('/');
+    }, 100);
     
-    // 重定向到主页或之前的页面
-    router.push('/');
-    
-  }, [router, searchParams, toast]);
+  }, [router, searchParams]); // Remove toast from dependencies
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">

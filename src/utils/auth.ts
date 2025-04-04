@@ -34,10 +34,7 @@ export const logout = (): void => {
 };
 
 export const handleGitHubLogin = (): void => {
-  const githubClientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || '';
-  const redirectUri = process.env.NEXT_PUBLIC_GITHUB_REDIRECT_URI || 'http://localhost:3000/api/auth/github/callback';
-  
-  window.location.href = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=user:email`;
+  window.location.href = '/api/auth/github';
 };
 
 export const getGitHubCallback = async (code: string): Promise<AuthResponse> => {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
 interface Toast {
   id: string;
@@ -18,22 +18,28 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = (toast: Omit<Toast, 'id'>) => {
+  // Use useCallback to prevent re-rendering the components that use this function
+  const toast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { ...toast, id }]);
     
-    // 自动移除toast
+    // Auto-remove toast after 5 seconds
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 5000);
-  };
+  }, []);
 
-  const dismiss = (id: string) => {
+  const dismiss = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, []);
+
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = React.useMemo(() => {
+    return { toasts, toast, dismiss };
+  }, [toasts, toast, dismiss]);
 
   return (
-    <ToastContext.Provider value={{ toasts, toast, dismiss }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <ToastContainer />
     </ToastContext.Provider>
