@@ -1,12 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest, isEducator } from '@/lib/auth';
 
 // Get a single course detail
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request, { params }) {
   try {
+    // 确保在使用params.id前先await解析params
+    const resolvedParams = await params;
     const currentUser = getUserFromRequest(request);
-    const courseId = params.id;
+    const courseId = parseInt(resolvedParams.id, 10);
+    
+    if (isNaN(courseId)) {
+      return NextResponse.json(
+        { error: 'Invalid course ID format' },
+        { status: 400 }
+      );
+    }
     
     // Get course details, including author and course chapters
     const course = await prisma.course.findUnique({
@@ -90,10 +99,19 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // Update course information (only educators can modify their own courses)
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request, { params }) {
   try {
+    // 确保在使用params.id前先await解析params
+    const resolvedParams = await params;
     const currentUser = getUserFromRequest(request);
-    const courseId = params.id;
+    const courseId = parseInt(resolvedParams.id, 10);
+    
+    if (isNaN(courseId)) {
+      return NextResponse.json(
+        { error: 'Invalid course ID format' },
+        { status: 400 }
+      );
+    }
     
     // Verify if the user is logged in and is an educator
     if (!currentUser) {
@@ -163,7 +181,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       const existingLessonIds = existingCourse.lessons.map(lesson => lesson.id);
       
       // Find the lessons that need to be deleted
-      const updatedLessonIds = lessons.filter((l: any) => l.id).map((l: any) => l.id);
+      const updatedLessonIds = lessons.filter(l => l.id).map(l => l.id);
       const lessonsToDelete = existingLessonIds.filter(id => !updatedLessonIds.includes(id));
       
       // Delete lessons that are no longer needed
@@ -275,8 +293,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 // Delete course (only educators can delete their own courses)
 export async function DELETE(request, { params }) {
   try {
+    // 确保在使用params.id前先await解析params
+    const resolvedParams = await params;
     const currentUser = getUserFromRequest(request);
-    const courseId = params.id;
+    const courseId = parseInt(resolvedParams.id, 10);
+    
+    if (isNaN(courseId)) {
+      return NextResponse.json(
+        { error: 'Invalid course ID format' },
+        { status: 400 }
+      );
+    }
     
     // Verify if the user is logged in and is an educator
     if (!currentUser) {

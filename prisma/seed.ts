@@ -16,12 +16,12 @@ const sampleImageUrls = [
 async function main() {
   try {
     // Clear all existing data
-    // console.log('Clearing existing data...');
-    // await prisma.userCourse.deleteMany({});
-    // await prisma.lesson.deleteMany({});
-    // await prisma.course.deleteMany({});
-    // await prisma.user.deleteMany({});
-    // console.log('All existing data cleared.');
+    console.log('Clearing existing data...');
+    await prisma.userCourse.deleteMany({});
+    await prisma.lesson.deleteMany({});
+    await prisma.course.deleteMany({});
+    await prisma.user.deleteMany({});
+    console.log('All existing data cleared.');
 
     console.log('Creating sample data...');
     

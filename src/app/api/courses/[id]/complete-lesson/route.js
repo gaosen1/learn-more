@@ -1,12 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 
 // Mark lesson as completed
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request, { params }) {
   try {
-    const courseId = params.id;
+    // 确保在使用params.id前先await解析params
+    const resolvedParams = await params;
+    const courseId = parseInt(resolvedParams.id, 10);
     const currentUser = getUserFromRequest(request);
+    
+    if (isNaN(courseId)) {
+      return NextResponse.json(
+        { error: 'Invalid course ID format' },
+        { status: 400 }
+      );
+    }
     
     // Verify if user is logged in
     if (!currentUser) {
@@ -18,17 +27,18 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     
     // Get lesson ID from request body
     const { lessonId } = await request.json();
+    const lessonIdInt = parseInt(lessonId, 10);
     
-    if (!lessonId) {
+    if (!lessonId || isNaN(lessonIdInt)) {
       return NextResponse.json(
-        { error: 'Lesson ID is required' },
+        { error: 'Valid lesson ID is required' },
         { status: 400 }
       );
     }
     
     // Verify if lesson exists
     const lesson = await prisma.lesson.findUnique({
-      where: { id: lessonId },
+      where: { id: lessonIdInt },
       include: {
         course: true
       }
@@ -76,14 +86,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const completedLessonIds = JSON.parse(userCourse.completedLessonIds || '[]');
     
     // Check if lesson is already marked as complete
-    if (completedLessonIds.includes(lessonId)) {
+    if (completedLessonIds.includes(lessonIdInt)) {
       return NextResponse.json(
         { message: 'Lesson already marked as complete' }
       );
     }
     
     // Add newly completed lesson ID
-    completedLessonIds.push(lessonId);
+    completedLessonIds.push(lessonIdInt);
     
     // Query total number of lessons in the course
     const totalLessons = await prisma.lesson.count({

@@ -28,12 +28,48 @@ model User {
   // Relations
   createdCourses Course[]  @relation("CourseAuthor")
   enrolledCourses UserCourse[]
+  subscriptions   Subscription[]
 }
 
 // User role enum
 enum UserRole {
   STUDENT
   EDUCATOR
+}
+
+// Subscription Plan Enum
+enum SubscriptionPlan {
+  BASIC
+  STANDARD 
+  PREMIUM
+  ENTERPRISE
+}
+
+// Subscription Status Enum
+enum SubscriptionStatus {
+  ACTIVE
+  PENDING
+  CANCELLED
+  EXPIRED
+}
+
+// Subscription Model
+model Subscription {
+  id          Int               @id @default(autoincrement())
+  userId      Int
+  plan        SubscriptionPlan
+  status      SubscriptionStatus @default(ACTIVE)
+  startDate   DateTime          @default(now())
+  endDate     DateTime?
+  price       Float
+  billingCycle String            // monthly, quarterly, yearly
+  features    String            // JSON string of features
+  isArchived  Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  // Relations
+  user        User              @relation(fields: [userId], references: [id])
 }
 
 // Course model
