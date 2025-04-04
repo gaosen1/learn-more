@@ -1,4 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { getUserFromRequest, isEducator } from '@/lib/auth';
 
 // Sample course data
 export const courses = [
@@ -86,6 +88,194 @@ export const courses = [
   }
 ];
 
-export async function GET() {
-  return NextResponse.json(courses);
+// 获取所有公开课程或用户有权访问的课程
+export async function GET(request: NextRequest) {
+  try {
+    const currentUser = getUserFromRequest(request);
+    
+    // 查询条件：公开课程或用户为课程作者
+    let whereClause: any = { isPublic: true };
+    
+    // 如果用户已登录，包含其创建的非公开课程
+    if (currentUser) {
+      whereClause = {
+        OR: [
+          { isPublic: true },
+          { authorId: currentUser.id }
+        ]
+      };
+    }
+    
+    const courses = await prisma.course.findMany({
+      where: whereClause,
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true
+          }
+        },
+        lessons: {
+          select: {
+            id: true,
+            title: true,
+            order: true
+          },
+          orderBy: {
+            order: 'asc'
+          }
+        },
+        enrolledUsers: true
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      }
+    });
+    
+    // 转换课程数据以适应前端结构
+    const formattedCourses = courses.map(course => {
+      const lessonCount = course.lessons.length;
+      const enrolledUserCount = course.enrolledUsers.length;
+      
+      // 查找当前用户注册信息（如果已登录）
+      const userEnrollment = currentUser
+        ? course.enrolledUsers.find(enrollment => enrollment.userId === currentUser.id)
+        : null;
+      
+      return {
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        imageUrl: course.imageUrl,
+        category: course.category,
+        isPublic: course.isPublic,
+        author: course.author.name,
+        authorId: course.author.id,
+        authorAvatar: course.author.avatar,
+        createdAt: course.createdAt.toISOString(),
+        updatedAt: course.updatedAt.toISOString(),
+        lessons: course.lessons.map(lesson => ({
+          id: lesson.id,
+          title: lesson.title,
+          completed: userEnrollment 
+            ? JSON.parse(userEnrollment.completedLessonIds).includes(lesson.id)
+            : false
+        })),
+        progress: userEnrollment ? userEnrollment.progress : 0,
+        completedLessons: userEnrollment ? userEnrollment.completedLessons : 0,
+        isEnrolled: !!userEnrollment
+      };
+    });
+    
+    return NextResponse.json(formattedCourses);
+    
+  } catch (error) {
+    console.error('获取课程错误:', error);
+    return NextResponse.json(
+      { error: '获取课程列表时发生错误' },
+      { status: 500 }
+    );
+  }
+}
+
+// 创建新课程（仅教育者角色）
+export async function POST(request: NextRequest) {
+  try {
+    const currentUser = getUserFromRequest(request);
+    
+    // 验证用户是否已登录且为教育者
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: '未授权，请先登录' },
+        { status: 401 }
+      );
+    }
+    
+    // 验证用户角色是否为教育者
+    if (!isEducator(currentUser)) {
+      return NextResponse.json(
+        { error: '只有教育者可以创建课程' },
+        { status: 403 }
+      );
+    }
+    
+    const body = await request.json();
+    const { title, description, imageUrl, category, isPublic = false, lessons = [] } = body;
+    
+    // 验证必填字段
+    if (!title || !description || !imageUrl || !category) {
+      return NextResponse.json(
+        { error: '标题、描述、图片和分类为必填项' },
+        { status: 400 }
+      );
+    }
+    
+    // 创建新课程及相关课程章节
+    const newCourse = await prisma.course.create({
+      data: {
+        title,
+        description,
+        imageUrl,
+        category,
+        isPublic,
+        authorId: currentUser.id,
+        lessons: {
+          create: lessons.map((lesson: { title: string }, index: number) => ({
+            title: lesson.title,
+            order: index,
+            content: ''
+          }))
+        }
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true
+          }
+        },
+        lessons: {
+          orderBy: {
+            order: 'asc'
+          }
+        }
+      }
+    });
+    
+    // 格式化响应数据
+    const formattedCourse = {
+      id: newCourse.id,
+      title: newCourse.title,
+      description: newCourse.description,
+      imageUrl: newCourse.imageUrl,
+      category: newCourse.category,
+      isPublic: newCourse.isPublic,
+      author: newCourse.author.name,
+      authorId: newCourse.author.id,
+      authorAvatar: newCourse.author.avatar,
+      createdAt: newCourse.createdAt.toISOString(),
+      updatedAt: newCourse.updatedAt.toISOString(),
+      lessons: newCourse.lessons.map(lesson => ({
+        id: lesson.id,
+        title: lesson.title,
+        completed: false
+      })),
+      progress: 0,
+      completedLessons: 0,
+      isEnrolled: false
+    };
+    
+    return NextResponse.json(formattedCourse, { status: 201 });
+    
+  } catch (error) {
+    console.error('创建课程错误:', error);
+    return NextResponse.json(
+      { error: '创建课程时发生错误' },
+      { status: 500 }
+    );
+  }
 } 
