@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
 import styles from './page.module.css';
+import { register } from "@/utils/auth"; // 导入注册函数
 
 export default function Signup() {
   const router = useRouter();
@@ -34,23 +35,29 @@ export default function Signup() {
     
     // Basic validation
     if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
-      setError('Please fill in all required fields');
+      setError('Please fill in all required fields.');
       setIsLoading(false);
       return;
     }
-
+    
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords do not match.');
       setIsLoading(false);
       return;
     }
-
+    
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      setIsLoading(false);
+      return;
+    }
+    
     if (!formData.agreeTerms) {
-      setError('Please agree to the Terms of Service and Privacy Policy');
+      setError('You must agree to the Terms of Service.');
       setIsLoading(false);
       return;
     }
-
+    
     try {
       // 调用实际的注册API
       const response = await fetch('/api/auth/register', {
@@ -72,8 +79,9 @@ export default function Signup() {
         throw new Error(data.error || 'Registration failed');
       }
       
-      // 保存返回的token
-      localStorage.setItem('userToken', data.token);
+      // 保存返回的token，使用与login一致的键名
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       console.log('Registration successful');
       
       // 重定向到仪表板
