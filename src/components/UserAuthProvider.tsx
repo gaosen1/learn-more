@@ -10,7 +10,7 @@ import {
 
 interface UserContextType {
   user: {
-    id: string;
+    id: number;
     name: string;
     email: string;
     role: string;

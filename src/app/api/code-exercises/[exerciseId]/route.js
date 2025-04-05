@@ -1,27 +1,27 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
-// 获取单个练习详情
+// Get exercise details
 export async function GET(req, { params }) {
   try {
     const { exerciseId } = params;
 
     if (!exerciseId) {
-      return NextResponse.json({ error: '练习ID是必需的' }, { status: 400 });
+      return NextResponse.json({ error: 'Exercise ID is required' }, { status: 400 });
     }
 
-    const exercise = await db.exercise.findUnique({
+    const exercise = await prisma.exercise.findUnique({
       where: {
         id: exerciseId,
       },
     });
 
     if (!exercise) {
-      return NextResponse.json({ error: '练习未找到' }, { status: 404 });
+      return NextResponse.json({ error: 'Exercise not found' }, { status: 404 });
     }
 
-    // 转换测试用例回JSON格式
+    // Convert test cases back to JSON format
     const exerciseWithParsedTestCases = {
       ...exercise,
       testCases: JSON.parse(exercise.testCases || '[]'),
@@ -29,60 +29,60 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(exerciseWithParsedTestCases);
   } catch (error) {
-    console.error('获取编程练习详情失败:', error);
-    return NextResponse.json({ error: '获取编程练习详情失败' }, { status: 500 });
+    console.error('Failed to get exercise details:', error);
+    return NextResponse.json({ error: 'Failed to get exercise details' }, { status: 500 });
   }
 }
 
-// 更新练习
+// Update exercise
 export async function PATCH(req, { params }) {
   try {
     const session = await auth();
     const { exerciseId } = params;
     
-    // 验证用户权限
+    // Verify user permissions
     if (!session || session.user.role !== 'EDUCATOR') {
       return NextResponse.json(
-        { error: '未授权，只有教育者可以更新编程练习' },
+        { error: 'Unauthorized, only educators can update exercises' },
         { status: 401 }
       );
     }
 
-    // 先检查练习是否存在
-    const existingExercise = await db.exercise.findUnique({
+    // Check if exercise exists
+    const existingExercise = await prisma.exercise.findUnique({
       where: {
         id: exerciseId,
       },
     });
 
     if (!existingExercise) {
-      return NextResponse.json({ error: '练习未找到' }, { status: 404 });
+      return NextResponse.json({ error: 'Exercise not found' }, { status: 404 });
     }
 
-    // 验证练习是否由当前用户创建
+    // Verify exercise was created by current user
     if (existingExercise.userId !== session.user.id) {
       return NextResponse.json(
-        { error: '未授权，您只能更新自己创建的练习' },
+        { error: 'Unauthorized, you can only update exercises you created' },
         { status: 403 }
       );
     }
 
     const body = await req.json();
     
-    // 处理测试用例
+    // Process test cases
     if (body.testCases && Array.isArray(body.testCases)) {
       body.testCases = JSON.stringify(body.testCases);
     }
 
-    // 更新练习
-    const updatedExercise = await db.exercise.update({
+    // Update exercise
+    const updatedExercise = await prisma.exercise.update({
       where: {
         id: exerciseId,
       },
       data: body,
     });
 
-    // 转换测试用例回JSON格式
+    // Convert test cases back to JSON format
     const exerciseWithParsedTestCases = {
       ...updatedExercise,
       testCases: JSON.parse(updatedExercise.testCases || '[]'),
@@ -90,46 +90,46 @@ export async function PATCH(req, { params }) {
 
     return NextResponse.json(exerciseWithParsedTestCases);
   } catch (error) {
-    console.error('更新编程练习失败:', error);
-    return NextResponse.json({ error: '更新编程练习失败' }, { status: 500 });
+    console.error('Failed to update exercise:', error);
+    return NextResponse.json({ error: 'Failed to update exercise' }, { status: 500 });
   }
 }
 
-// 删除练习
+// Delete exercise
 export async function DELETE(req, { params }) {
   try {
     const session = await auth();
     const { exerciseId } = params;
     
-    // 验证用户权限
+    // Verify user permissions
     if (!session || session.user.role !== 'EDUCATOR') {
       return NextResponse.json(
-        { error: '未授权，只有教育者可以删除编程练习' },
+        { error: 'Unauthorized, only educators can delete exercises' },
         { status: 401 }
       );
     }
 
-    // 先检查练习是否存在
-    const existingExercise = await db.exercise.findUnique({
+    // Check if exercise exists
+    const existingExercise = await prisma.exercise.findUnique({
       where: {
         id: exerciseId,
       },
     });
 
     if (!existingExercise) {
-      return NextResponse.json({ error: '练习未找到' }, { status: 404 });
+      return NextResponse.json({ error: 'Exercise not found' }, { status: 404 });
     }
 
-    // 验证练习是否由当前用户创建
+    // Verify exercise was created by current user
     if (existingExercise.userId !== session.user.id) {
       return NextResponse.json(
-        { error: '未授权，您只能删除自己创建的练习' },
+        { error: 'Unauthorized, you can only delete exercises you created' },
         { status: 403 }
       );
     }
 
-    // 删除练习
-    await db.exercise.delete({
+    // Delete exercise
+    await prisma.exercise.delete({
       where: {
         id: exerciseId,
       },
@@ -137,7 +137,7 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('删除编程练习失败:', error);
-    return NextResponse.json({ error: '删除编程练习失败' }, { status: 500 });
+    console.error('Failed to delete exercise:', error);
+    return NextResponse.json({ error: 'Failed to delete exercise' }, { status: 500 });
   }
 } 

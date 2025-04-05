@@ -5,26 +5,26 @@
   margin-bottom: 1rem;
 }
 
-/* 定制滚动条 */
-:global(.monaco-editor .monaco-scrollable-element) {
+/* Custom scrollbar */
+.editorContainer :global(.monaco-editor .monaco-scrollable-element) {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
-:global(.monaco-editor .monaco-scrollable-element::-webkit-scrollbar) {
+.editorContainer :global(.monaco-editor .monaco-scrollable-element::-webkit-scrollbar) {
   width: 8px;
   height: 8px;
 }
 
-:global(.monaco-editor .monaco-scrollable-element::-webkit-scrollbar-track) {
+.editorContainer :global(.monaco-editor .monaco-scrollable-element::-webkit-scrollbar-track) {
   background: var(--scrollbar-track, #f1f1f1);
 }
 
-:global(.monaco-editor .monaco-scrollable-element::-webkit-scrollbar-thumb) {
+.editorContainer :global(.monaco-editor .monaco-scrollable-element::-webkit-scrollbar-thumb) {
   background: var(--scrollbar-thumb, #888);
   border-radius: 4px;
 }
 
-:global(.monaco-editor .monaco-scrollable-element::-webkit-scrollbar-thumb:hover) {
+.editorContainer :global(.monaco-editor .monaco-scrollable-element::-webkit-scrollbar-thumb:hover) {
   background: var(--scrollbar-thumb-hover, #555);
 } 

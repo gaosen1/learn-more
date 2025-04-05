@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
-// 获取编程练习列表
+// Get list of programming exercises
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -13,7 +13,7 @@ export async function GET(req) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    // 构建查询条件
+    // Build query conditions
     const where = {};
     
     if (difficulty) {
@@ -28,13 +28,13 @@ export async function GET(req) {
       where.category = category;
     }
 
-    // 获取练习总数
-    const totalExercises = await db.exercise.count({
+    // Get total count of exercises
+    const totalExercises = await prisma.exercise.count({
       where
     });
 
-    // 获取练习列表
-    const exercises = await db.exercise.findMany({
+    // Get list of exercises
+    const exercises = await prisma.exercise.findMany({
       where,
       skip,
       take: limit,
@@ -62,40 +62,40 @@ export async function GET(req) {
       }
     });
   } catch (error) {
-    console.error('获取编程练习列表失败:', error);
-    return NextResponse.json({ error: '获取编程练习列表失败' }, { status: 500 });
+    console.error('Failed to get programming exercises list:', error);
+    return NextResponse.json({ error: 'Failed to get programming exercises list' }, { status: 500 });
   }
 }
 
-// 创建新的编程练习
+// Create new programming exercise
 export async function POST(req) {
   try {
     const session = await auth();
     
-    // 检查用户权限
+    // Check user permissions
     if (!session || session.user.role !== 'EDUCATOR') {
       return NextResponse.json(
-        { error: '未授权，只有教育者可以创建编程练习' },
+        { error: 'Unauthorized, only educators can create programming exercises' },
         { status: 401 }
       );
     }
     
     const body = await req.json();
     
-    // 验证必填字段
+    // Validate required fields
     const { title, description, language, difficulty, initialCode, testCases } = body;
     
     if (!title || !description || !language || !difficulty || !initialCode || !testCases) {
       return NextResponse.json(
-        { error: '所有字段都是必填的' },
+        { error: 'All fields are required' },
         { status: 400 }
       );
     }
     
-    // 验证测试用例格式
+    // Validate test case format
     if (!Array.isArray(testCases) || testCases.length === 0) {
       return NextResponse.json(
-        { error: '至少需要一个有效的测试用例' },
+        { error: 'At least one valid test case is required' },
         { status: 400 }
       );
     }
@@ -103,14 +103,14 @@ export async function POST(req) {
     for (const testCase of testCases) {
       if (!testCase.description || !testCase.expectedOutput) {
         return NextResponse.json(
-          { error: '每个测试用例必须包含描述和预期输出' },
+          { error: 'Each test case must include a description and expected output' },
           { status: 400 }
         );
       }
     }
     
-    // 创建新的编程练习
-    const exercise = await db.exercise.create({
+    // Create new programming exercise
+    const exercise = await prisma.exercise.create({
       data: {
         title,
         description,
@@ -118,14 +118,14 @@ export async function POST(req) {
         difficulty,
         initialCode,
         testCases: JSON.stringify(testCases),
-        category: body.category || '通用',
+        category: body.category || 'General',
         userId: session.user.id
       }
     });
     
     return NextResponse.json(exercise);
   } catch (error) {
-    console.error('创建编程练习失败:', error);
-    return NextResponse.json({ error: '创建编程练习失败' }, { status: 500 });
+    console.error('Failed to create programming exercise:', error);
+    return NextResponse.json({ error: 'Failed to create programming exercise' }, { status: 500 });
   }
 } 

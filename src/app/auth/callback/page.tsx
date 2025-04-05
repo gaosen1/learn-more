@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ui/toast';
 import { parseToken, publishAuthChange } from '@/utils/auth';
 import { LoadingSpinner } from '@/components/ui/loading';
 import styles from './page.module.css';
 
-export default function AuthCallback() {
+
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -90,17 +91,30 @@ export default function AuthCallback() {
         router.push('/login?error=processing_error');
       }, 100);
     }
-  }, [router, searchParams]); // Keep toast out of dependencies
+  }, [router, searchParams, toast]);
 
   return (
+    <div className={styles.card}>
+      <LoadingSpinner size="lg" text={status} />
+      
+      <p className={styles.redirectText}>
+        You'll be redirected automatically once the process is complete.
+      </p>
+    </div>
+  );
+}
+
+// 主页面组件
+export default function AuthCallback() {
+  return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <LoadingSpinner size="lg" text={status} />
-        
-        <p className={styles.redirectText}>
-          You'll be redirected automatically once the process is complete.
-        </p>
-      </div>
+      <Suspense fallback={
+        <div className={styles.card}>
+          <LoadingSpinner size="lg" text="Loading..." />
+        </div>
+      }>
+        <AuthCallbackContent />
+      </Suspense>
     </div>
   );
 } 

@@ -9,7 +9,7 @@ import api from "@/utils/api";
 import { login, handleGitHubLogin } from "@/utils/auth";
 import { useToast } from "@/components/ui/toast";
 import { FaGithub } from "react-icons/fa";
-import Button from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { LoadingDots } from "@/components/ui/loading";
 
@@ -182,9 +182,15 @@ export default function Login() {
                 type="submit" 
                 className={`${styles.submitButton}`}
                 disabled={isLoading}
-                isLoading={isLoading}
               >
-                Login
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <LoadingDots size="sm" variant="light" />
+                    <span className="ml-2">Processing...</span>
+                  </div>
+                ) : (
+                  'Login'
+                )}
               </Button>
             </form>
             
@@ -198,7 +204,7 @@ export default function Login() {
                   className={styles.githubButton}
                   onClick={handleGitHubLoginClick}
                   type="button"
-                  variant="github"
+                  variant="secondary"
                   disabled={isGithubLoading}
                 >
                   {isGithubLoading ? (

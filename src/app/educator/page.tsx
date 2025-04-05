@@ -36,7 +36,7 @@ export default function EducatorPortal() {
         // For now, we'll use sample data
         const sampleCourses: Course[] = [
           {
-            id: '1',
+            id: 1,
             title: 'Introduction to Web Development',
             description: 'Learn the basics of HTML, CSS, and JavaScript to build your first website.',
             enrollments: 125,
@@ -44,7 +44,7 @@ export default function EducatorPortal() {
             lastUpdated: '2023-04-15'
           },
           {
-            id: '2',
+            id: 2,
             title: 'Python Programming for Beginners',
             description: 'A comprehensive introduction to Python for absolute beginners.',
             enrollments: 89,
@@ -52,7 +52,7 @@ export default function EducatorPortal() {
             lastUpdated: '2023-03-22'
           },
           {
-            id: '3',
+            id: 3,
             title: 'Advanced React Patterns',
             description: 'Master advanced React patterns and techniques for building complex applications.',
             enrollments: 0,
