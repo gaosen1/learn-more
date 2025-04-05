@@ -2,10 +2,13 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 
-// 获取订阅计划列表
+// Configure this route to be dynamic even in export mode
+export const dynamic = 'force-dynamic';
+
+// Get subscription plan list
 export async function GET(request) {
   try {
-    // 返回可用的订阅计划
+    // Return available subscription plans
     const subscriptionPlans = [
       {
         id: 'BASIC',
@@ -18,7 +21,7 @@ export async function GET(request) {
           supportLevel: 'basic',
           certificatesEnabled: false
         },
-        description: '适合初次体验的学习者',
+        description: 'Suitable for first time learners',
         popular: false
       },
       {
@@ -32,7 +35,7 @@ export async function GET(request) {
           supportLevel: 'standard',
           certificatesEnabled: true
         },
-        description: '最受欢迎的选择',
+        description: 'The most popular choice',
         popular: true
       },
       {
@@ -47,7 +50,7 @@ export async function GET(request) {
           certificatesEnabled: true,
           mentorSupport: true
         },
-        description: '无限制访问所有课程',
+        description: 'Unlimited access to all courses',
         popular: false
       },
       {
@@ -64,7 +67,7 @@ export async function GET(request) {
           customBranding: true,
           teamManagement: true
         },
-        description: '适合企业团队使用',
+        description: 'Suitable for enterprise teams',
         popular: false
       }
     ];
@@ -79,10 +82,10 @@ export async function GET(request) {
   }
 }
 
-// 创建用户订阅
+// Create user subscription
 export async function POST(request) {
   try {
-    // 获取当前用户
+    // Get current user
     const currentUser = getUserFromRequest(request);
     
     if (!currentUser) {
@@ -92,11 +95,11 @@ export async function POST(request) {
       );
     }
     
-    // 解析请求体
+    // Parse request body
     const body = await request.json();
     const { plan, billingCycle } = body;
 
-    // 验证必填字段
+    // Validate required fields
     if (!plan || !billingCycle) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -104,7 +107,7 @@ export async function POST(request) {
       );
     }
     
-    // 检查用户是否已有活跃订阅
+    // Check if user already has an active subscription
     const existingSubscription = await prisma.subscription.findFirst({
       where: {
         userId: parseInt(currentUser.id),
@@ -119,7 +122,7 @@ export async function POST(request) {
       );
     }
     
-    // 设置价格和特性
+    // Set price and features
     let price, features;
     switch (plan) {
       case 'BASIC':
@@ -169,7 +172,7 @@ export async function POST(request) {
         );
     }
     
-    // 计算结束日期
+    // Calculate end date
     let endDate = new Date();
     if (billingCycle === 'monthly') {
       endDate = new Date(new Date().setMonth(new Date().getMonth() + 1));
@@ -184,7 +187,7 @@ export async function POST(request) {
       );
     }
     
-    // 创建订阅
+    // Create subscription
     const subscription = await prisma.subscription.create({
       data: {
         userId: parseInt(currentUser.id),
