@@ -1,0 +1,119 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+}
+
+.description {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 2rem;
+}
+
+.playgroundContainer {
+  margin-bottom: 3rem;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tabsList {
+  margin-bottom: 1rem;
+}
+
+.tabContent {
+  flex-grow: 1;
+}
+
+.editorContainer {
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.executionContainer {
+  margin-top: 1rem;
+}
+
+.infoSection {
+  background-color: #f8f9fa;
+  padding: 2rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+}
+
+.infoSection h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.infoSection ul {
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.infoSection li {
+  margin-bottom: 0.5rem;
+}
+
+.infoSection p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.infoSection a {
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.infoSection a:hover {
+  text-decoration: underline;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem;
+  }
+  
+  .infoSection {
+    padding: 1.5rem;
+  }
+}
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+  .title {
+    color: #f0f0f0;
+  }
+  
+  .description {
+    color: #bbb;
+  }
+  
+  .infoSection {
+    background-color: #1a1a1a;
+  }
+  
+  .infoSection h2 {
+    color: #e0e0e0;
+  }
+  
+  .infoSection a {
+    color: #66b3ff;
+  }
+} 

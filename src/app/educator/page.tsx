@@ -8,7 +8,7 @@ import Link from 'next/link';
 import styles from './page.module.css';
 
 interface Course {
-  id: string;
+  id: number;
   title: string;
   description: string;
   enrollments: number;

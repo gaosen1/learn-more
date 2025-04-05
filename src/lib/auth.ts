@@ -17,7 +17,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 interface TokenPayload {
-  id: string;
+  id: number;
   email: string;
   role: UserRole;
 }
@@ -54,7 +54,7 @@ export function extractTokenFromHeader(authHeader: string | null): string | null
 }
 
 // Extract user information from request
-export function getUserFromRequest(req: NextRequest): { id: string; email: string; role: UserRole } | null {
+export function getUserFromRequest(req: NextRequest): { id: number; email: string; role: UserRole } | null {
   const authHeader = req.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;

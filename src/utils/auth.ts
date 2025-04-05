@@ -12,7 +12,7 @@ interface RegisterCredentials extends LoginCredentials {
 interface AuthResponse {
   token: string;
   user: {
-    id: string;
+    id: number;
     name: string;
     email: string;
     role: string;

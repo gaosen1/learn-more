@@ -29,6 +29,8 @@ model User {
   createdCourses Course[]  @relation("CourseAuthor")
   enrolledCourses UserCourse[]
   subscriptions   Subscription[]
+  exercises       Exercise[]
+  solutions       Solution[]
 }
 
 // User role enum
@@ -121,4 +123,43 @@ model Lesson {
   // Relations
   courseId      Int
   course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+// Programming exercise model
+model Exercise {
+  id          String     @id @default(uuid())
+  userId      Int
+  title       String
+  description String     @db.Text
+  language    String    // 'python', 'javascript', 等
+  difficulty  String    // 'easy', 'medium', 'hard'
+  category    String?   // 算法, 数据结构, 等
+  initialCode String     @db.Text
+  testCases   String     @db.Text  // 存储为JSON字符串
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // 与用户的关系
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // 与解决方案的关系
+  solutions   Solution[]
+}
+
+// User submitted solutions
+model Solution {
+  id         String    @id @default(uuid())
+  userId     Int
+  exerciseId String
+  code       String    @db.Text
+  passed     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relationship with users and exercises
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise   Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([exerciseId])
 }
