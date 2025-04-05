@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingDots } from '@/components/ui/loading';
 
-export default function AuthCallback() {
+// 分离实际处理逻辑的组件
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -81,5 +82,21 @@ export default function AuthCallback() {
         <LoadingDots size="lg" />
       </div>
     </div>
+  );
+}
+
+// 主页面组件用Suspense包裹内容组件
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+        <h1 className="text-2xl font-bold mb-4">Loading...</h1>
+        <div className="mt-4">
+          <LoadingDots size="lg" />
+        </div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   );
 } 
