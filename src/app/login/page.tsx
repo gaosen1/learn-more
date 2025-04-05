@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { LoadingDots } from "@/components/ui/loading";
 
-export default function Login() {
+function LoginContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -118,121 +118,139 @@ export default function Login() {
   }, [isGithubLoading, toast]);
 
   return (
-    <MainLayout>
-      <div className={styles.login}>
-        <div className="container">
-          <div className={styles.formContainer}>
-            <div className={styles.formHeader}>
-              <h1 className={styles.title}>Login</h1>
-              <p className={styles.subtitle}>Sign in to your LearnMore account</p>
+    <div className={styles.login}>
+      <div className="container">
+        <div className={styles.formContainer}>
+          <div className={styles.formHeader}>
+            <h1 className={styles.title}>Login</h1>
+            <p className={styles.subtitle}>Sign in to your LearnMore account</p>
+          </div>
+          
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.formGroup}>
+              <label htmlFor="email" className={styles.label}>Email</label>
+              <Input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={styles.input}
+                placeholder="Your email address"
+                required
+              />
             </div>
             
-            {error && (
-              <div className={styles.errorMessage}>
-                {error}
-              </div>
-            )}
+            <div className={styles.formGroup}>
+              <label htmlFor="password" className={styles.label}>Password</label>
+              <Input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={styles.input}
+                placeholder="Your password"
+                required
+              />
+            </div>
             
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div className={styles.formGroup}>
-                <label htmlFor="email" className={styles.label}>Email</label>
-                <Input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
+            <div className={styles.formOptions}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  checked={formData.rememberMe}
                   onChange={handleChange}
-                  className={styles.input}
-                  placeholder="Your email address"
-                  required
+                  className={styles.checkbox}
                 />
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label htmlFor="password" className={styles.label}>Password</label>
-                <Input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={styles.input}
-                  placeholder="Your password"
-                  required
-                />
-              </div>
-              
-              <div className={styles.formOptions}>
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    name="rememberMe"
-                    checked={formData.rememberMe}
-                    onChange={handleChange}
-                    className={styles.checkbox}
-                  />
-                  <span>Remember me</span>
-                </label>
-                <Link href="/forgot-password" className={styles.forgotPassword}>
-                  Forgot password?
-                </Link>
-              </div>
-              
+                <span>Remember me</span>
+              </label>
+              <Link href="/forgot-password" className={styles.forgotPassword}>
+                Forgot password?
+              </Link>
+            </div>
+            
+            <Button 
+              type="submit" 
+              className={`${styles.submitButton}`}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center">
+                  <LoadingDots size="sm" variant="light" />
+                  <span className="ml-2">Processing...</span>
+                </div>
+              ) : (
+                'Login'
+              )}
+            </Button>
+          </form>
+          
+          <div className={styles.socialLogin}>
+            <div className={styles.divider}>
+              <span className={styles.dividerText}>OR</span>
+            </div>
+            
+            <div className={styles.socialLoginContainer}>
               <Button 
-                type="submit" 
-                className={`${styles.submitButton}`}
-                disabled={isLoading}
+                className={styles.githubButton}
+                onClick={handleGitHubLoginClick}
+                type="button"
+                variant="secondary"
+                disabled={isGithubLoading}
               >
-                {isLoading ? (
+                {isGithubLoading ? (
                   <div className="flex items-center">
                     <LoadingDots size="sm" variant="light" />
-                    <span className="ml-2">Processing...</span>
+                    <span className="ml-2">Connecting...</span>
                   </div>
                 ) : (
-                  'Login'
+                  <>
+                    <FaGithub className={`${styles.githubIcon} mr-2`} />
+                    Continue with GitHub
+                  </>
                 )}
               </Button>
-            </form>
-            
-            <div className={styles.socialLogin}>
-              <div className={styles.divider}>
-                <span className={styles.dividerText}>OR</span>
-              </div>
-              
-              <div className={styles.socialLoginContainer}>
-                <Button 
-                  className={styles.githubButton}
-                  onClick={handleGitHubLoginClick}
-                  type="button"
-                  variant="secondary"
-                  disabled={isGithubLoading}
-                >
-                  {isGithubLoading ? (
-                    <div className="flex items-center">
-                      <LoadingDots size="sm" variant="light" />
-                      <span className="ml-2">Connecting...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <FaGithub className={`${styles.githubIcon} mr-2`} />
-                      Continue with GitHub
-                    </>
-                  )}
-                </Button>
-              </div>
             </div>
-            
-            <div className={styles.formFooter}>
-              <p>
-                Don't have an account?{' '}
-                <Link href="/signup" className={styles.signupLink}>
-                  Sign up
-                </Link>
-              </p>
-            </div>
+          </div>
+          
+          <div className={styles.formFooter}>
+            <p>
+              Don't have an account?{' '}
+              <Link href="/signup" className={styles.signupLink}>
+                Sign up
+              </Link>
+            </p>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <MainLayout>
+      <Suspense fallback={
+        <div className={styles.login}>
+          <div className="container">
+            <div className={styles.formContainer}>
+              <div className="flex justify-center items-center h-96">
+                <LoadingDots size="lg" />
+              </div>
+            </div>
+          </div>
+        </div>
+      }>
+        <LoginContent />
+      </Suspense>
     </MainLayout>
   );
 } 
