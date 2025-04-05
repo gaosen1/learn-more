@@ -59,29 +59,16 @@ export default function Signup() {
     }
     
     try {
-      // 调用实际的注册API
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role // 使用用户选择的角色
-        }),
+      // 使用auth.ts中的register函数，确保认证状态一致
+      await register({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
       });
-
-      const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
+      // 设置认证重定向标记，帮助Header组件检测登录
+      sessionStorage.setItem('auth_redirect', 'true');
       
-      // 保存返回的token，使用与login一致的键名
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
       console.log('Registration successful');
       
       // 重定向到仪表板

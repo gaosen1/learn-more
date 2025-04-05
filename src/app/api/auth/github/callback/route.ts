@@ -321,7 +321,7 @@ export async function GET(request: NextRequest) {
     // Step 6: Redirect to frontend with token
     console.log('OAuth flow completed successfully, redirecting to frontend...');
     // Note: In production, use a more secure way to pass tokens, like httpOnly cookies
-    return NextResponse.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
+    return NextResponse.redirect(`${FRONTEND_URL}/auth/callback?token=${token}&auth_redirect=true`);
     
   } catch (error) {
     console.error('GitHub OAuth Error:', error);

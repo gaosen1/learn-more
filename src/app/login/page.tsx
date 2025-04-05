@@ -68,12 +68,18 @@ function LoginContent() {
         email: formData.email,
         password: formData.password,
       });
-      router.push('/');
+      
+      // Set auth redirect flag to help Header component detect login
+      sessionStorage.setItem('auth_redirect', 'true');
+      
       toast({
         title: "Login Successful",
         description: "Welcome back!",
         type: "success"
       });
+      
+      // Redirect to dashboard after login
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
         title: "Login Failed",

@@ -58,20 +58,20 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
               });
               setPyodideReady(true);
             } catch (err) {
-              console.error('Pyodide加载失败:', err);
-              setError('无法加载Python执行环境，请刷新页面重试。');
+              console.error('Failed to load Pyodide:', err);
+              setError('Failed to load Python runtime. Please refresh the page and try again.');
             } finally {
               setPyodideLoading(false);
             }
           };
           script.onerror = () => {
-            setError('加载Python环境失败，请检查您的网络连接并刷新页面。');
+            setError('Failed to load Python environment. Please check your network connection and refresh the page.');
             setPyodideLoading(false);
           };
           document.body.appendChild(script);
         } catch (err) {
-          console.error('加载Pyodide失败:', err);
-          setError('初始化Python环境时发生错误。');
+          console.error('Failed to load Pyodide:', err);
+          setError('Error initializing Python environment.');
           setPyodideLoading(false);
         }
       };
@@ -80,10 +80,10 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
     }
   }, [pyodideLoading]);
 
-  // 执行代码
+  // Execute code
   const runCode = async () => {
     if (!pyodideReady) {
-      setError('Python环境尚未加载完成，请稍候。');
+      setError('Python environment is not ready yet. Please wait.');
       return;
     }
 
@@ -93,14 +93,14 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
     setTestResults([]);
 
     try {
-      // 捕获标准输出和错误
+      // Capture stdout and stderr
       const stdout: string[] = [];
       const stderr: string[] = [];
 
       window.pyodide.setStdout({ write: (text: string) => stdout.push(text) });
       window.pyodide.setStderr({ write: (text: string) => stderr.push(text) });
 
-      // 执行代码
+      // Execute code
       await window.pyodide.runPythonAsync(code);
 
       const output = stdout.join('');
@@ -110,21 +110,21 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
         setError(stderr.join(''));
       }
 
-      // 如果有测试用例且启用了自动评分，则运行测试
+      // Run tests if there are test cases and auto-grading is enabled
       if (autoGrade && testCases.length > 0) {
         runTests();
       }
     } catch (err: any) {
-      setError(err.message || '执行代码时发生错误');
+      setError(err.message || 'Error executing code');
     } finally {
       setLoading(false);
     }
   };
 
-  // 运行测试用例
+  // Run test cases
   const runTests = async () => {
     if (!pyodideReady || !window.pyodide) {
-      setError('Python环境尚未加载完成，请稍候。');
+      setError('Python environment is not ready yet. Please wait.');
       return;
     }
 
@@ -135,9 +135,9 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
           window.pyodide.setStdout({ write: (text: string) => stdout.push(text) });
 
           try {
-            // 如果有输入，设置标准输入
+            // Set stdin if input exists
             if (testCase.input) {
-              // 这里简化处理，实际上需要更复杂的输入处理逻辑
+              // Simplified input handling, actual implementation needs more complex logic
               await window.pyodide.runPythonAsync(`
                 import sys
                 import io
@@ -145,7 +145,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
               `);
             }
 
-            // 执行代码
+            // Execute code
             await window.pyodide.runPythonAsync(code);
             const output = stdout.join('').trim();
             
@@ -158,7 +158,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
           } catch (err: any) {
             return {
               passed: false,
-              output: err.message || '执行测试时发生错误',
+              output: err.message || 'Error executing test',
               expectedOutput: testCase.expectedOutput,
               description: testCase.description,
             };
@@ -168,7 +168,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
 
       setTestResults(results);
     } catch (err: any) {
-      setError(err.message || '运行测试用例时发生错误');
+      setError(err.message || 'Error running test cases');
     }
   };
 
@@ -181,7 +181,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
           className={styles.runButton}
         >
           {loading ? <Spinner className="mr-2" size="sm" /> : null}
-          {loading ? '正在执行...' : '运行代码'}
+          {loading ? 'Executing...' : 'Run Code'}
         </Button>
         
         {autoGrade && testCases.length > 0 && (
@@ -191,7 +191,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
             variant="outline"
             className={styles.testButton}
           >
-            运行测试
+            Run Tests
           </Button>
         )}
       </div>
@@ -199,7 +199,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
       {pyodideLoading && (
         <div className={styles.loadingState}>
           <Spinner size="md" />
-          <p>正在加载Python执行环境...</p>
+          <p>Loading Python runtime environment...</p>
         </div>
       )}
 
@@ -213,7 +213,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
 
       {output && (
         <div className={styles.outputContainer}>
-          <h3 className={styles.outputTitle}>输出结果:</h3>
+          <h3 className={styles.outputTitle}>Output:</h3>
           <pre className={styles.output}>{output}</pre>
         </div>
       )}
@@ -221,7 +221,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
       {testResults.length > 0 && (
         <div className={styles.testResultsContainer}>
           <h3 className={styles.testResultsTitle}>
-            测试结果 ({testResults.filter(r => r.passed).length}/{testResults.length} 通过)
+            Test Results ({testResults.filter(r => r.passed).length}/{testResults.length} Passed)
           </h3>
           <div className={styles.testResultsList}>
             {testResults.map((result, index) => (
@@ -234,18 +234,18 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
                     {result.passed ? '✓' : '✗'}
                   </span>
                   <h4 className={styles.testDescription}>
-                    测试 {index + 1}: {result.description}
+                    Test {index + 1}: {result.description}
                   </h4>
                 </div>
                 
                 {!result.passed && (
                   <div className={styles.testDetails}>
                     <div className={styles.testOutputRow}>
-                      <span className={styles.testLabel}>期望输出:</span>
+                      <span className={styles.testLabel}>Expected Output:</span>
                       <pre className={styles.testExpected}>{result.expectedOutput}</pre>
                     </div>
                     <div className={styles.testOutputRow}>
-                      <span className={styles.testLabel}>实际输出:</span>
+                      <span className={styles.testLabel}>Actual Output:</span>
                       <pre className={styles.testActual}>{result.output}</pre>
                     </div>
                   </div>

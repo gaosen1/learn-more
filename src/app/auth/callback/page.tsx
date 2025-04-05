@@ -1,120 +1,85 @@
 'use client';
 
-import { useEffect, useState, useRef, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useToast } from '@/components/ui/toast';
-import { parseToken, publishAuthChange } from '@/utils/auth';
-import { LoadingSpinner } from '@/components/ui/loading';
-import styles from './page.module.css';
+import { LoadingDots } from '@/components/ui/loading';
 
-
-function AuthCallbackContent() {
+export default function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [status, setStatus] = useState('Authenticating...');
-  const processedRef = useRef(false);
-  const errorShownRef = useRef(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Prevent multiple executions of this effect
-    if (processedRef.current) return;
-    processedRef.current = true;
-    
     const token = searchParams.get('token');
+    const isAuthRedirect = searchParams.get('auth_redirect');
     
     if (!token) {
-      setStatus('Authentication failed');
-      if (!errorShownRef.current) {
-        errorShownRef.current = true;
-        toast({
-          title: 'Login failure',
-          description: 'Authentication token missing or invalid',
-          type: 'error'
-        });
-      }
-      
-      // Redirect with a short delay to ensure toast is shown
-      setTimeout(() => {
-        router.push('/login?error=auth_failed');
-      }, 100);
-      
+      setError('No authentication token provided');
+      setTimeout(() => router.push('/login'), 2000);
       return;
     }
     
     try {
-      setStatus('Verifying credentials...');
-      
-      // Save token to local storage
+      // Save token to localStorage
       localStorage.setItem('token', token);
       
-      // Parse token and extract user data
-      const userData = parseToken(token);
-      if (userData) {
-        // Save user data to local storage
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        // Emit auth change event to update UI immediately
-        publishAuthChange(userData);
-        setStatus(`Welcome${userData?.name ? ', ' + userData.name : ''}!`);
+      // Extract user info from token (JWT)
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Invalid token format');
       }
       
-      // Show success message only once
-      if (!errorShownRef.current) {
-        errorShownRef.current = true;
-        toast({
-          title: 'Login successful',
-          description: `Welcome${userData?.name ? ', ' + userData.name : ''}! You've successfully logged in via GitHub.`,
-          type: 'success'
-        });
+      // Decode JWT payload (middle part)
+      const payload = JSON.parse(atob(tokenParts[1]));
+      
+      // Get user info from payload
+      const user = {
+        id: payload.id,
+        email: payload.email,
+        name: payload.name || payload.email.split('@')[0],
+        role: payload.role || 'STUDENT',
+      };
+      
+      // Save user info to localStorage
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Set a flag for the header to detect auth change
+      if (isAuthRedirect) {
+        sessionStorage.setItem('auth_redirect', 'true');
       }
       
-      // Redirect with a short delay to ensure toast is shown
-      setTimeout(() => {
-        router.push('/');
-      }, 800); // Longer delay to ensure user sees the welcome message
-    } catch (error) {
-      console.error('Error processing authentication:', error);
-      setStatus('Authentication error');
+      console.log('Authentication successful, redirecting to dashboard...');
       
-      if (!errorShownRef.current) {
-        errorShownRef.current = true;
-        toast({
-          title: 'Login error',
-          description: 'An error occurred while processing your login',
-          type: 'error'
-        });
-      }
+      // Redirect to dashboard
+      router.push('/dashboard');
       
-      setTimeout(() => {
-        router.push('/login?error=processing_error');
-      }, 100);
+    } catch (err) {
+      console.error('Error processing authentication response:', err);
+      setError('Failed to process authentication response');
+      
+      // Redirect to login after a short delay
+      setTimeout(() => router.push('/login'), 2000);
     }
-  }, [router, searchParams, toast]);
+  }, [router, searchParams]);
 
   return (
-    <div className={styles.card}>
-      <LoadingSpinner size="lg" text={status} />
+    <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+      <h1 className="text-2xl font-bold mb-4">
+        {error ? 'Authentication Error' : 'Authentication Successful'}
+      </h1>
       
-      <p className={styles.redirectText}>
-        You'll be redirected automatically once the process is complete.
-      </p>
-    </div>
-  );
-}
-
-// 主页面组件
-export default function AuthCallback() {
-  return (
-    <div className={styles.container}>
-      <Suspense fallback={
-        <div className={styles.card}>
-          <LoadingSpinner size="lg" text="Loading..." />
-        </div>
-      }>
-        <AuthCallbackContent />
-      </Suspense>
+      {error ? (
+        <p className="text-red-500 mb-4">{error}</p>
+      ) : (
+        <>
+          <p className="mb-4">You have been successfully authenticated.</p>
+          <p className="mb-4">Redirecting to dashboard...</p>
+        </>
+      )}
+      
+      <div className="mt-4">
+        <LoadingDots size="lg" />
+      </div>
     </div>
   );
 } 

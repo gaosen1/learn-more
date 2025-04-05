@@ -32,7 +32,7 @@ interface User {
 }
 
 export default function Header() {
-  const { user, isAuthenticated, isLoading } = useUser();
+  const { user, isAuthenticated, isLoading, refreshAuth } = useUser();
   const [showMenu, setShowMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -55,6 +55,73 @@ export default function Header() {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
+
+  // Add localStorage change listener to refresh auth state
+  useEffect(() => {
+    const checkAuthChanges = () => {
+      // Check if token exists in localStorage
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      
+      if (token && userStr && !isAuthenticated && !isLoading) {
+        console.log('Auth data detected in localStorage but not in context. Refreshing auth state...');
+        console.log(`Token exists: ${!!token}, User exists: ${!!userStr}, isAuthenticated: ${isAuthenticated}`);
+        
+        try {
+          // Validate that user is valid JSON
+          const user = JSON.parse(userStr);
+          if (user && user.id) {
+            // If refreshAuth is available, call it to update auth state
+            if (typeof refreshAuth === 'function') {
+              console.log('Calling refreshAuth()...');
+              refreshAuth();
+            } else {
+              console.log('refreshAuth not available, falling back to page reload');
+              // Fallback - reload the page to refresh auth state
+              window.location.reload();
+            }
+          } else {
+            console.log('User data exists but appears invalid:', user);
+          }
+        } catch (e) {
+          console.error('Failed to parse user data from localStorage:', e);
+        }
+      }
+    };
+    
+    // Check immediately on component mount
+    checkAuthChanges();
+    
+    // Handle login redirection scenarios
+    if (typeof window !== 'undefined') {
+      // If we just came from a login redirect, check auth status
+      const isRedirect = sessionStorage.getItem('auth_redirect');
+      if (isRedirect) {
+        console.log('Detected auth redirect, checking auth status...');
+        sessionStorage.removeItem('auth_redirect');
+        checkAuthChanges();
+      }
+    }
+    
+    // Check when localStorage changes (works for cross-tab storage changes)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'token' || e.key === 'user') {
+        console.log('Storage changed:', e.key);
+        checkAuthChanges();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check periodically for direct localStorage modifications
+    // which don't trigger the storage event in the same tab
+    const interval = setInterval(checkAuthChanges, 2000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [isAuthenticated, isLoading, refreshAuth]);
 
   const handleLogout = () => {
     logout();
