@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/setup-db.js && next dev",
+    "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "dev:local": "env-cmd -f .env.development next dev",
+    "build:prod": "env-cmd -f .env.production prisma generate && next build",
+    "env:check": "node scripts/check-env.js",
     "lint": "next lint",
     "postinstall": "prisma generate",
     "db:seed": "prisma db seed",
@@ -41,6 +44,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.7",
+    "env-cmd": "^10.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   },

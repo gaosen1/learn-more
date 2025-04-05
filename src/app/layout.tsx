@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LearnMore - 交互式课程创建平台",
-  description: "轻松创建、分享和跟踪在线课程的交互式平台",
-  keywords: ["在线课程", "教育平台", "课程创建", "交互式学习", "编程教育"],
+  title: "LearnMore - Interactive Course Creation Platform",
+  description: "An interactive platform to easily create, share and track online courses",
+  keywords: ["online courses", "education platform", "course creation", "interactive learning", "programming education"],
 };
 
 export default function RootLayout({
