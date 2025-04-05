@@ -1,0 +1,193 @@
+.dbExplorer {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  color: #666;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.tableSelector {
+  background-color: #f7f7f7;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.tableSelector h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.tableList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tableButton {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tableButton:hover {
+  background-color: #e9e9e9;
+}
+
+.tableButton.active {
+  background-color: #e1e1e1;
+  font-weight: 600;
+}
+
+.dataView {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.tableHeader h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.totalCount {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dataTable th {
+  background-color: #f5f5f5;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.dataTable td {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #e5e5e5;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dataTable tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.dataTable tr:hover {
+  background-color: #f0f0f0;
+}
+
+.nullValue {
+  color: #999;
+  font-style: italic;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.error {
+  color: #e53e3e;
+  padding: 1rem;
+  background-color: #fff5f5;
+  border-left: 4px solid #e53e3e;
+  margin: 1rem;
+}
+
+.emptyState {
+  padding: 3rem;
+  text-align: center;
+  color: #666;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+  border-top: 1px solid #e5e5e5;
+}
+
+.pageInfo {
+  color: #666;
+}
+
+.paginationButton {
+  min-width: 100px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+  
+  .tableSelector {
+    margin-bottom: 1rem;
+  }
+  
+  .tableList {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .tableButton {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+  }
+} 
