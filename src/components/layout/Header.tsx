@@ -70,8 +70,11 @@ export default function Header() {
   const navItems = [...navigation];
   if (isAuthenticated) {
     navItems.push({ name: 'My Courses', href: '/dashboard' });
-    if (user?.role === 'ADMIN') {
+    if (user?.role === 'EDUCATOR') {
       navItems.push({ name: 'Create Course', href: '/create' });
+    }
+    if (user?.role === 'EDUCATOR') {
+      navItems.push({ name: 'Educator Portal', href: '/educator' });
     }
   }
 
@@ -177,13 +180,13 @@ export default function Header() {
                   >
                     Dashboard
                   </Link>
-                  {user?.role === 'ADMIN' && (
+                  {user?.role === 'EDUCATOR' && (
                     <Link
-                      href="/admin"
+                      href="/admin/subscriptions"
                       className={styles.userDropdownLink}
                       onClick={() => setShowMenu(false)}
                     >
-                      Admin Panel
+                      Subscription Management
                     </Link>
                   )}
                   <button
@@ -300,6 +303,14 @@ export default function Header() {
                   >
                     Profile
                   </Link>
+                  {user?.role === 'EDUCATOR' && (
+                    <Link
+                      href="/admin/subscriptions"
+                      className={styles.mobileNavLink}
+                    >
+                      Subscription Management
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);

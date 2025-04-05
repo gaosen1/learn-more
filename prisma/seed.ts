@@ -1,4 +1,4 @@
-import { PrismaClient, User, UserRole } from '@prisma/client';
+import { PrismaClient, User, UserRole, SubscriptionPlan, SubscriptionStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -20,6 +20,7 @@ async function main() {
     await prisma.userCourse.deleteMany({});
     await prisma.lesson.deleteMany({});
     await prisma.course.deleteMany({});
+    await prisma.subscription.deleteMany({});
     await prisma.user.deleteMany({});
     console.log('All existing data cleared.');
 
@@ -47,7 +48,7 @@ async function main() {
           name: educator.name,
           password: hashedPassword,
           role: 'EDUCATOR',
-          avatar: `https://ui-avatars.com/api/?name=${educator.name.replace(' ', '+')}&background=random`,
+          avatar: `https://ui-avatars.com/api/?name=${educator.name.split('').map(n => n[0])}&background=random`,
         },
       });
       createdEducators.push(user);
@@ -66,139 +67,298 @@ async function main() {
     });
     console.log(`Created student: ${student.name} (ID: ${student.id})`);
 
+    // Create sample subscription data
+    console.log('Creating sample subscriptions...');
+    
+    // Subscription plan data
+    const subscriptionPlans = [
+      {
+        plan: 'BASIC',
+        price: 9.99,
+        billingCycle: 'monthly',
+        features: JSON.stringify({
+          coursesLimit: 5,
+          downloadContent: false,
+          supportLevel: 'basic',
+          certificatesEnabled: false
+        })
+      },
+      {
+        plan: 'STANDARD',
+        price: 19.99,
+        billingCycle: 'monthly',
+        features: JSON.stringify({
+          coursesLimit: 15,
+          downloadContent: true,
+          supportLevel: 'standard',
+          certificatesEnabled: true
+        })
+      },
+      {
+        plan: 'PREMIUM',
+        price: 29.99,
+        billingCycle: 'monthly',
+        features: JSON.stringify({
+          coursesLimit: -1, // unlimited
+          downloadContent: true,
+          supportLevel: 'priority',
+          certificatesEnabled: true,
+          mentorSupport: true
+        })
+      },
+      {
+        plan: 'ENTERPRISE',
+        price: 299.99,
+        billingCycle: 'yearly',
+        features: JSON.stringify({
+          coursesLimit: -1, // unlimited
+          downloadContent: true,
+          supportLevel: 'dedicated',
+          certificatesEnabled: true,
+          mentorSupport: true,
+          customBranding: true,
+          teamManagement: true
+        })
+      }
+    ];
+    
+    // Create subscriptions for users
+    // Student gets a BASIC subscription
+    const studentSubscription = await prisma.subscription.create({
+      data: {
+        userId: student.id,
+        plan: 'BASIC' as SubscriptionPlan,
+        status: 'ACTIVE' as SubscriptionStatus,
+        startDate: new Date(),
+        endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)), // Expires in one month
+        price: subscriptionPlans[0].price,
+        billingCycle: subscriptionPlans[0].billingCycle,
+        features: subscriptionPlans[0].features,
+      }
+    });
+    console.log(`Created BASIC subscription for student (ID: ${studentSubscription.id})`);
+    
+    // Create different subscriptions for some educators
+    const educatorSubscriptions = [
+      { 
+        userId: createdEducators[0].id, 
+        plan: 'STANDARD' as SubscriptionPlan,
+        status: 'ACTIVE' as SubscriptionStatus,
+        planIndex: 1 
+      },
+      { 
+        userId: createdEducators[1].id, 
+        plan: 'PREMIUM' as SubscriptionPlan,
+        status: 'ACTIVE' as SubscriptionStatus,
+        planIndex: 2 
+      },
+      { 
+        userId: createdEducators[2].id, 
+        plan: 'ENTERPRISE' as SubscriptionPlan,
+        status: 'ACTIVE' as SubscriptionStatus,
+        planIndex: 3 
+      },
+      { 
+        userId: createdEducators[3].id, 
+        plan: 'BASIC' as SubscriptionPlan, 
+        status: 'EXPIRED' as SubscriptionStatus,
+        planIndex: 0 
+      },
+      { 
+        userId: createdEducators[4].id, 
+        plan: 'STANDARD' as SubscriptionPlan,
+        status: 'CANCELLED' as SubscriptionStatus,
+        planIndex: 1 
+      }
+    ];
+    
+    for (const subData of educatorSubscriptions) {
+      const planDetails = subscriptionPlans[subData.planIndex];
+      
+      // Calculate end date based on status
+      let endDate = new Date();
+      if (subData.status === 'ACTIVE') {
+        // For active subscriptions, set future expiry date
+        if (planDetails.billingCycle === 'monthly') {
+          endDate = new Date(new Date().setMonth(new Date().getMonth() + 1));
+        } else if (planDetails.billingCycle === 'quarterly') {
+          endDate = new Date(new Date().setMonth(new Date().getMonth() + 3));
+        } else {
+          endDate = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
+        }
+      } else {
+        // For expired/cancelled subscriptions, set past date
+        endDate = new Date(new Date().setDate(new Date().getDate() - 10));
+      }
+      
+      const subscription = await prisma.subscription.create({
+        data: {
+          userId: subData.userId,
+          plan: subData.plan,
+          status: subData.status,
+          startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)), // Started a month ago
+          endDate: endDate,
+          price: planDetails.price,
+          billingCycle: planDetails.billingCycle,
+          features: planDetails.features,
+          isArchived: subData.status === 'CANCELLED' // Archive cancelled subscriptions
+        }
+      });
+      
+      console.log(`Created ${subData.plan} subscription for user ID ${subData.userId} (ID: ${subscription.id})`);
+    }
+
     // Sample course data
     const coursesData = [
       {
-        title: 'Web Development Basics',
-        description: 'Learn the fundamentals of HTML, CSS, and JavaScript to build responsive websites from scratch.',
-        category: 'Web Development',
-        authorIndex: 0,
+        title: 'Introduction to Web Development',
+        description: 'Learn the basics of HTML, CSS, and JavaScript to build your first website.',
+        imageUrl: sampleImageUrls[0],
+        category: 'web development',
+        isPublic: true,
+        authorId: createdEducators[0].id,
         lessons: [
-          { title: 'Introduction to HTML', content: 'HTML basics and document structure' },
-          { title: 'CSS Fundamentals', content: 'Styling web pages with CSS' },
-          { title: 'JavaScript Basics', content: 'Adding interactivity with JavaScript' },
-          { title: 'Responsive Design', content: 'Making websites work on all devices' },
-          { title: 'Building a Simple Website', content: 'Putting it all together' },
-        ],
+          { title: 'HTML Basics', content: 'Introduction to HTML syntax and document structure.', order: 1 },
+          { title: 'CSS Fundamentals', content: 'Basic CSS styling techniques and selectors.', order: 2 },
+          { title: 'JavaScript Essentials', content: 'Introduction to JavaScript and DOM manipulation.', order: 3 },
+          { title: 'Building Your First Website', content: 'Putting it all together to create a simple website.', order: 4 }
+        ]
       },
       {
         title: 'Python Programming for Beginners',
-        description: 'A comprehensive introduction to Python programming language with practical exercises and projects.',
-        category: 'Programming',
-        authorIndex: 1,
+        description: 'A comprehensive introduction to Python for absolute beginners.',
+        imageUrl: sampleImageUrls[1],
+        category: 'programming',
+        isPublic: true,
+        authorId: createdEducators[1].id,
         lessons: [
-          { title: 'Python Setup and Environment', content: 'Installing Python and setting up your environment' },
-          { title: 'Variables and Data Types', content: 'Understanding Python data types and variables' },
-          { title: 'Control Flow', content: 'Conditions and loops in Python' },
-          { title: 'Functions and Modules', content: 'Creating reusable code with functions' },
-          { title: 'Working with Files', content: 'Reading and writing files in Python' },
-        ],
+          { title: 'Python Setup', content: 'Installing Python and setting up your development environment.', order: 1 },
+          { title: 'Variables and Data Types', content: 'Understanding basic data types and variable assignments.', order: 2 },
+          { title: 'Control Flow', content: 'Conditional statements and loops in Python.', order: 3 },
+          { title: 'Functions', content: 'Creating and using functions in Python.', order: 4 },
+          { title: 'Working with Lists', content: 'Manipulating and using lists effectively.', order: 5 }
+        ]
       },
       {
-        title: 'Data Structures and Algorithms',
-        description: 'Understand and implement common data structures and algorithms to solve complex programming challenges.',
-        category: 'Computer Science',
-        authorIndex: 2,
+        title: 'Data Science Fundamentals',
+        description: 'Introduction to data science concepts, tools, and methodologies.',
+        imageUrl: sampleImageUrls[2],
+        category: 'data science',
+        isPublic: true,
+        authorId: createdEducators[2].id,
         lessons: [
-          { title: 'Introduction to Data Structures', content: 'Overview of common data structures' },
-          { title: 'Arrays and Linked Lists', content: 'Implementing and using arrays and linked lists' },
-          { title: 'Stacks and Queues', content: 'Stack and queue operations and implementations' },
-          { title: 'Trees and Graphs', content: 'Tree and graph data structures' },
-          { title: 'Sorting and Searching Algorithms', content: 'Common sorting and searching techniques' },
-        ],
-      },
-      {
-        title: 'UI/UX Design Principles',
-        description: 'Master the fundamentals of user interface and user experience design to create intuitive and engaging applications.',
-        category: 'Design',
-        authorIndex: 3,
-        lessons: [
-          { title: 'Introduction to UI/UX', content: 'Understanding the difference between UI and UX' },
-          { title: 'User Research', content: 'Methods for researching user needs' },
-          { title: 'Wireframing and Prototyping', content: 'Creating wireframes and interactive prototypes' },
-          { title: 'Visual Design Principles', content: 'Color theory, typography, and layout' },
-          { title: 'Usability Testing', content: 'Testing designs with real users' },
-        ],
-      },
-      {
-        title: 'Machine Learning Fundamentals',
-        description: 'Introduction to machine learning concepts, algorithms, and practical applications using Python.',
-        category: 'Data Science',
-        authorIndex: 4,
-        lessons: [
-          { title: 'Introduction to Machine Learning', content: 'Basic concepts and types of machine learning' },
-          { title: 'Data Preprocessing', content: 'Preparing data for machine learning models' },
-          { title: 'Supervised Learning', content: 'Classification and regression techniques' },
-          { title: 'Unsupervised Learning', content: 'Clustering and dimensionality reduction' },
-          { title: 'Model Evaluation', content: 'Assessing model performance' },
-        ],
+          { title: 'Introduction to Data Science', content: 'Overview of data science field and applications.', order: 1 },
+          { title: 'Statistics Basics', content: 'Fundamental statistical concepts for data analysis.', order: 2 },
+          { title: 'Data Cleaning', content: 'Techniques for preparing and cleaning datasets.', order: 3 },
+          { title: 'Data Visualization', content: 'Creating effective visualizations with Python libraries.', order: 4 },
+          { title: 'Introduction to Machine Learning', content: 'Basic machine learning algorithms and concepts.', order: 5 }
+        ]
       },
       {
         title: 'Mobile App Development with React Native',
-        description: 'Build cross-platform mobile applications using React Native framework and JavaScript.',
-        category: 'Mobile Development',
-        authorIndex: 5,
+        description: 'Build cross-platform mobile applications using React Native.',
+        imageUrl: sampleImageUrls[3],
+        category: 'mobile development',
+        isPublic: true,
+        authorId: createdEducators[3].id,
         lessons: [
-          { title: 'Setting Up React Native', content: 'Installing and configuring React Native' },
-          { title: 'React Native Components', content: 'Understanding core components' },
-          { title: 'Navigation', content: 'Implementing navigation in React Native apps' },
-          { title: 'State Management', content: 'Managing state with Redux or Context API' },
-          { title: 'Deploying React Native Apps', content: 'Publishing to app stores' },
-        ],
+          { title: 'React Native Setup', content: 'Setting up your development environment for React Native.', order: 1 },
+          { title: 'Components and Props', content: 'Understanding React Native components and props.', order: 2 },
+          { title: 'State Management', content: 'Managing state in React Native applications.', order: 3 },
+          { title: 'Navigation', content: 'Implementing navigation in mobile applications.', order: 4 },
+          { title: 'Working with APIs', content: 'Fetching and using data from APIs in React Native.', order: 5 },
+          { title: 'Publishing Your App', content: 'Steps to publish your app to Apple App Store and Google Play.', order: 6 }
+        ]
       },
+      {
+        title: 'UI/UX Design Principles',
+        description: 'Learn essential UI/UX design principles to create better user experiences.',
+        imageUrl: sampleImageUrls[4],
+        category: 'design',
+        isPublic: true,
+        authorId: createdEducators[4].id,
+        lessons: [
+          { title: 'Introduction to UI/UX', content: 'Understanding the difference between UI and UX.', order: 1 },
+          { title: 'User Research', content: 'Methods for conducting effective user research.', order: 2 },
+          { title: 'Wireframing and Prototyping', content: 'Creating wireframes and interactive prototypes.', order: 3 },
+          { title: 'Visual Design Principles', content: 'Core visual design principles for digital products.', order: 4 },
+          { title: 'Usability Testing', content: 'How to conduct usability tests and interpret results.', order: 5 }
+        ]
+      },
+      {
+        title: 'Full Stack Web Development with Node.js',
+        description: 'Learn to build complete web applications with Node.js, Express, and MongoDB.',
+        imageUrl: sampleImageUrls[5],
+        category: 'web development',
+        isPublic: true,
+        authorId: createdEducators[5].id,
+        lessons: [
+          { title: 'Node.js Fundamentals', content: 'Introduction to Node.js and its core concepts.', order: 1 },
+          { title: 'Express.js Framework', content: 'Building web applications with Express.js.', order: 2 },
+          { title: 'MongoDB Integration', content: 'Working with MongoDB for data storage.', order: 3 },
+          { title: 'RESTful API Development', content: 'Designing and implementing RESTful APIs.', order: 4 },
+          { title: 'Authentication and Authorization', content: 'Implementing user authentication and authorization.', order: 5 },
+          { title: 'Deployment and DevOps', content: 'Deploying your application to production.', order: 6 }
+        ]
+      }
     ];
 
-    // Create courses and their lessons
-    for (let i = 0; i < coursesData.length; i++) {
-      const courseData = coursesData[i];
-      const author = createdEducators[courseData.authorIndex];
-
+    // Create courses with lessons
+    console.log('Creating sample courses and lessons...');
+    for (const courseData of coursesData) {
       const course = await prisma.course.create({
         data: {
           title: courseData.title,
           description: courseData.description,
-          imageUrl: sampleImageUrls[i % sampleImageUrls.length],
+          imageUrl: courseData.imageUrl,
           category: courseData.category,
-          isPublic: true,
-          authorId: author.id,
-          lessons: {
-            create: courseData.lessons.map((lesson, index) => ({
-              title: lesson.title,
-              content: lesson.content,
-              order: index + 1,
-            })),
-          },
-        },
-        include: {
-          lessons: true,
+          isPublic: courseData.isPublic,
+          authorId: courseData.authorId,
         },
       });
-
-      console.log(`Created course: ${course.title} (ID: ${course.id}) with ${course.lessons.length} lessons`);
-
-      // Enroll the student in this course (only for some courses)
-      if (i % 2 === 0) {
-        // Store completed lesson IDs as JSON string
-        const completedLessonIds = course.lessons.slice(0, 2).map(lesson => lesson.id);
-        
-        await prisma.userCourse.create({
+      
+      console.log(`Created course: ${course.title} (ID: ${course.id})`);
+      
+      // Create lessons for this course
+      for (const lessonData of courseData.lessons) {
+        const lesson = await prisma.lesson.create({
           data: {
-            userId: student.id,
+            title: lessonData.title,
+            content: lessonData.content,
+            order: lessonData.order,
             courseId: course.id,
-            progress: Math.round((2 / course.lessons.length) * 100),
-            completedLessons: 2,
-            completedLessonIds: JSON.stringify(completedLessonIds),
           },
         });
-
-        console.log(`Student ${student.name} enrolled in course: ${course.title}`);
+        console.log(`  Created lesson: ${lesson.title} (ID: ${lesson.id})`);
       }
     }
-
-    console.log('Sample data creation completed!');
+    
+    // Enroll student in some courses
+    console.log('Enrolling student in courses...');
+    const courseIds = await prisma.course.findMany({
+      take: 3,
+      select: { id: true },
+    });
+    
+    for (const { id: courseId } of courseIds) {
+      const userCourse = await prisma.userCourse.create({
+        data: {
+          userId: student.id,
+          courseId,
+          progress: Math.floor(Math.random() * 100), // Random progress
+          completedLessons: Math.floor(Math.random() * 3), // Random completed lessons
+          completedLessonIds: JSON.stringify([]), // No completed lessons initially
+        },
+      });
+      
+      console.log(`Enrolled student in course ID ${courseId} (Enrollment ID: ${userCourse.id})`);
+    }
+    
+    console.log('Seed completed successfully!');
   } catch (error) {
-    console.error('Error in seed script:', error);
-    throw error;
+    console.error('Error seeding database:', error);
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -206,7 +366,4 @@ main()
   .catch((e) => {
     console.error(e);
     process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
   }); 
