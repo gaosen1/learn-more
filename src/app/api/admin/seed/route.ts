@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     
     results.push(`Created admin user: ${adminUser.email} (ID: ${adminUser.id})`);
     
-    // Create a sample course
+    // Create a sample course with a default section and lessons
     const course = await prisma.course.create({
       data: {
         title: 'Getting Started with LearnMore',
@@ -88,29 +88,48 @@ export async function POST(request: NextRequest) {
         category: 'platform',
         isPublic: true,
         authorId: adminUser.id,
-        lessons: {
+        // Create a section first
+        sections: {
           create: [
             {
-              title: 'Platform Overview',
-              content: 'Introduction to the LearnMore platform and its features.',
-              order: 1
-            },
-            {
-              title: 'Finding the Right Courses',
-              content: 'How to search and enroll in courses that match your interests.',
-              order: 2
-            },
-            {
-              title: 'Tracking Your Progress',
-              content: 'Using the dashboard to track your learning progress.',
-              order: 3
+              title: 'Getting Started', // Default section title
+              order: 1,
+              // Create lessons within this section
+              lessons: {
+                create: [
+                  {
+                    title: 'Platform Overview',
+                    content: 'Introduction to the LearnMore platform and its features.',
+                    order: 1,
+                    // sectionId will be implicitly set here by Prisma
+                  },
+                  {
+                    title: 'Finding the Right Courses',
+                    content: 'How to search and enroll in courses that match your interests.',
+                    order: 2,
+                  },
+                  {
+                    title: 'Tracking Your Progress',
+                    content: 'Using the dashboard to track your learning progress.',
+                    order: 3,
+                  }
+                ]
+              }
             }
           ]
         }
+        // Removed direct lesson creation under course
+        /*
+        lessons: {
+          create: [
+            // ... old lesson data ...
+          ]
+        }
+        */
       }
     });
     
-    results.push(`Created sample course: ${course.title} (ID: ${course.id})`);
+    results.push(`Created sample course: ${course.title} (ID: ${course.id}) with default section and lessons`);
     
     // If full seed is requested or allowed in production, run full seed
     if (seedType === 'full' || body.allowFullSeed) {

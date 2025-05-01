@@ -142,6 +142,26 @@ async function createTestCourses(prisma: PrismaClient, adminId: number, users: U
         category: course.category,
         isPublic: Math.random() > 0.2, // 80% of courses are public
         authorId: authorId,
+        // Create a default section first
+        sections: {
+          create: [
+            {
+              title: 'Course Content', // Default section name
+              order: 1,
+              // Create lessons within this section
+              lessons: {
+                create: course.lessons.map((title, index) => ({
+                  title,
+                  content: `This is detailed content about "${title}". It will contain complete course materials.`,
+                  order: index + 1
+                  // sectionId will be implicitly set here
+                }))
+              }
+            }
+          ]
+        }
+        // Removed direct lesson creation
+        /*
         lessons: {
           create: course.lessons.map((title, index) => ({
             title,
@@ -149,6 +169,7 @@ async function createTestCourses(prisma: PrismaClient, adminId: number, users: U
             order: index + 1
           }))
         }
+        */
       }
     });
     

@@ -3,7 +3,36 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
 const { PrismaClient } = require('@prisma/client');
+
+// --- Start: Load environment variables --- 
+const NODE_ENV = process.env.NODE_ENV || 'development';
+console.log(`Attempting to load environment variables for: ${NODE_ENV}`);
+
+const envFile = `.env.${NODE_ENV}`;
+const envPath = path.resolve(process.cwd(), envFile);
+
+try {
+  if (fs.existsSync(envPath)) {
+    console.log(`Loading environment variables from: ${envFile}`);
+    const envConfig = dotenv.parse(fs.readFileSync(envPath));
+    for (const key in envConfig) {
+      // Only set if not already set by the system environment
+      if (!process.env[key]) { 
+        process.env[key] = envConfig[key];
+      }
+    }
+    console.log('Environment variables loaded.');
+  } else {
+    console.log(`Environment file not found: ${envFile}. Using system environment variables.`);
+  }
+} catch (error) {
+  console.error(`Error reading environment file ${envFile}:`, error);
+  // Decide if you want to exit here or continue with potentially missing vars
+  // process.exit(1);
+}
+// --- End: Load environment variables ---
 
 /**
  * This script ensures the database is ready before the project starts:

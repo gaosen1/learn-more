@@ -2,17 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 
+// Define a type alias for the context parameter
+type ApiRouteContext<T extends Record<string, string>> = {
+  params: T;
+}
+
 // Make this endpoint dynamic
 export const dynamic = 'force-dynamic';
 
 // GET /api/courses/[id]/sections/[sectionId]/lessons - Get all lessons for a section
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string; sectionId: string } }
+  request: NextRequest, // Keeping NextRequest for consistency, can change to Request if needed
+  context: ApiRouteContext<{ id: string; sectionId: string }> // Use the type alias
 ) {
   try {
-    const courseId = parseInt(params.id);
-    const sectionId = parseInt(params.sectionId);
+    // Access params via context.params
+    const courseId = parseInt(context.params.id);
+    const sectionId = parseInt(context.params.sectionId);
     
     if (isNaN(courseId) || isNaN(sectionId)) {
       return NextResponse.json({ error: 'Invalid course or section ID' }, { status: 400 });
@@ -46,7 +52,7 @@ export async function GET(
 // POST /api/courses/[id]/sections/[sectionId]/lessons - Create a new lesson
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; sectionId: string } }
+  context: ApiRouteContext<{ id: string; sectionId: string }> // Use the type alias
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -55,8 +61,9 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const courseId = parseInt(params.id);
-    const sectionId = parseInt(params.sectionId);
+    // Access params via context.params
+    const courseId = parseInt(context.params.id);
+    const sectionId = parseInt(context.params.sectionId);
     
     if (isNaN(courseId) || isNaN(sectionId)) {
       return NextResponse.json({ error: 'Invalid course or section ID' }, { status: 400 });
@@ -64,7 +71,7 @@ export async function POST(
     
     // Check if the course exists and the user is the author
     const course = await prisma.course.findUnique({
-      where: { id: courseId }
+      where: { id: courseId } // Use courseId derived from context.params.id
     });
     
     if (!course) {
@@ -78,8 +85,8 @@ export async function POST(
     // Verify the section exists and belongs to this course
     const section = await prisma.section.findFirst({
       where: { 
-        id: sectionId,
-        courseId
+        id: sectionId, // Use sectionId derived from context.params.sectionId
+        courseId      // Use courseId derived from context.params.id
       }
     });
     

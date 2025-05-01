@@ -2,16 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromRequest } from '@/lib/auth';
 
+// Define a type alias for the context parameter
+type ApiRouteContext<T extends Record<string, string>> = {
+  params: T;
+}
+
 // Make this endpoint dynamic
 export const dynamic = 'force-dynamic';
 
+// --- Uncomment and update GET function --- 
 // GET /api/courses/[id]/lessons - Get all lessons for a course
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest, // Use NextRequest
+  context: ApiRouteContext<{ id: string }> // Use type alias
 ) {
   try {
-    const courseId = parseInt(params.id);
+    const courseId = parseInt(context.params.id); // Use context.params.id
     
     if (isNaN(courseId)) {
       return NextResponse.json({ error: 'Invalid course ID' }, { status: 400 });
@@ -26,13 +32,13 @@ export async function GET(
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
     }
     
-    // Get all lessons for this course
+    // Get all lessons for this course, ordered by section then lesson order
     const lessons = await prisma.lesson.findMany({
       where: { 
         courseId 
       },
       include: {
-        section: true
+        section: true // Include section for ordering
       },
       orderBy: [
         { section: { order: 'asc' } },
@@ -46,11 +52,13 @@ export async function GET(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+// --- End GET function ---
 
+// --- Uncomment and update POST function --- 
 // POST /api/courses/[id]/lessons - Create a new lesson
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: ApiRouteContext<{ id: string }> // Use type alias
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -59,7 +67,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const courseId = parseInt(params.id);
+    const courseId = parseInt(context.params.id); // Use context.params.id
     
     if (isNaN(courseId)) {
       return NextResponse.json({ error: 'Invalid course ID' }, { status: 400 });
@@ -95,7 +103,7 @@ export async function POST(
     const section = await prisma.section.findFirst({
       where: { 
         id: sectionId,
-        courseId
+        courseId // Use courseId derived from context.params.id
       }
     });
     
@@ -120,7 +128,7 @@ export async function POST(
         content: body.content || '',
         order: newOrder,
         sectionId,
-        courseId
+        courseId // Use courseId derived from context.params.id
       }
     });
     
@@ -130,3 +138,4 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 
+// --- End POST function --- 
