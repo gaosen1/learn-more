@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "env-cmd -f .env.production node scripts/setup-db.js && next build",
+    "build": "node scripts/setup-db.js && next build",
     "start": "next start",
     "env:check": "node scripts/check-env.js",
     "db:fix-sequences": "node scripts/fix-db-sequence.js",
