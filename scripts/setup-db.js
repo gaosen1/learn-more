@@ -51,16 +51,13 @@ async function main() {
     // Check if database is empty (no users)
     const userCount = await prisma.user.count();
 
-    // Execute seed script with proper safeguards
-    if (!isProduction || userCount === 0) {
-      console.log(`🔄 Seeding database (${isProduction ? 'production' : 'development'})...`);
-      if (isProduction) {
-        console.log('Database is empty - running seed script for initial data');
-      }
+    // Execute seed script only if the database is empty
+    if (userCount === 0) {
+      console.log('🔄 Database is empty, running seed script for initial data...');
       execSync('npx prisma db seed', { stdio: 'inherit' });
       console.log('✅ Database seeded successfully');
     } else {
-      console.log('⏩ Skipping seed script in production - database already has data');
+      console.log('⏩ Database already contains data, skipping seed script.');
     }
 
     // Fix sequence issues (especially important for Neon DB in production)

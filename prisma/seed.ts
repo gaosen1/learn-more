@@ -15,14 +15,14 @@ const sampleImageUrls = [
 
 async function main() {
   try {
-    // Clear all existing data
-    console.log('Clearing existing data...');
-    await prisma.userCourse.deleteMany({});
-    await prisma.lesson.deleteMany({});
-    await prisma.course.deleteMany({});
-    await prisma.subscription.deleteMany({});
-    await prisma.user.deleteMany({});
-    console.log('All existing data cleared.');
+    console.log('Creating sample data if necessary...');
+
+    // Check if data already exists (e.g., check for users)
+    const userCount = await prisma.user.count();
+    if (userCount > 0) {
+        console.log('Data already exists, skipping seed.');
+        return; // Exit if data exists
+    }
 
     console.log('Creating sample data...');
     
@@ -319,14 +319,24 @@ async function main() {
       
       console.log(`Created course: ${course.title} (ID: ${course.id})`);
       
-      // Create lessons for this course
+      // Create a default section for the course
+      const defaultSection = await prisma.section.create({
+          data: {
+              title: 'Course Content', // Default section title
+              order: 1,
+              courseId: course.id,
+          }
+      });
+      console.log(`  Created default section for course ${course.title} (ID: ${defaultSection.id})`);
+      
+      // Create lessons for this course, assigning them to the default section
       for (const lessonData of courseData.lessons) {
         const lesson = await prisma.lesson.create({
           data: {
             title: lessonData.title,
             content: lessonData.content,
             order: lessonData.order,
-            courseId: course.id,
+            sectionId: defaultSection.id, // Assign to the created section
           },
         });
         console.log(`  Created lesson: ${lesson.title} (ID: ${lesson.id})`);

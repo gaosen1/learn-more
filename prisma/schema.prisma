@@ -88,8 +88,39 @@ model Course {
   // Relations
   authorId      Int
   author        User      @relation("CourseAuthor", fields: [authorId], references: [id])
-  lessons       Lesson[]
+  sections      Section[]
   enrolledUsers UserCourse[]
+  lessons       Lesson[]
+}
+
+// Course section model (章节)
+model Section {
+  id            Int       @id @default(autoincrement())
+  title         String
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  courseId      Int
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons       Lesson[]
+}
+
+// Course lesson model
+model Lesson {
+  id            Int       @id @default(autoincrement())
+  title         String
+  content       String?   @default("")
+  order         Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  sectionId     Int
+  section       Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  courseId      Int?
+  course        Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
 }
 
 // Course-User relation (for tracking course enrollment and progress)
@@ -109,20 +140,6 @@ model UserCourse {
   
   // Compound unique constraint to ensure a user doesn't enroll in the same course multiple times
   @@unique([userId, courseId])
-}
-
-// Course lesson model
-model Lesson {
-  id            Int       @id @default(autoincrement())
-  title         String
-  content       String?   @default("")
-  order         Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  // Relations
-  courseId      Int
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 // Programming exercise model

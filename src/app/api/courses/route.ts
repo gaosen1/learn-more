@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json();
-    const { title, description, imageUrl, category, isPublic = false, lessons = [] } = body;
+    const { title, description, imageUrl, category, isPublic = false } = body;
     
     // Validate required fields
     if (!title || !description || !imageUrl || !category) {
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create new course and related lessons
+    // Create new course
     const newCourse = await prisma.course.create({
       data: {
         title,
@@ -221,13 +221,6 @@ export async function POST(request: NextRequest) {
         category,
         isPublic,
         authorId: currentUser.id,
-        lessons: {
-          create: lessons.map((lesson: { title: string }, index: number) => ({
-            title: lesson.title,
-            order: index,
-            content: ''
-          }))
-        }
       },
       include: {
         author: {
@@ -236,11 +229,6 @@ export async function POST(request: NextRequest) {
             name: true,
             email: true,
             avatar: true
-          }
-        },
-        lessons: {
-          orderBy: {
-            order: 'asc'
           }
         }
       }
@@ -258,19 +246,10 @@ export async function POST(request: NextRequest) {
       authorId: newCourse.author.id,
       authorAvatar: newCourse.author.avatar,
       createdAt: newCourse.createdAt.toISOString(),
-      updatedAt: newCourse.updatedAt.toISOString(),
-      lessons: newCourse.lessons.map(lesson => ({
-        id: lesson.id,
-        title: lesson.title,
-        completed: false
-      })),
-      progress: 0,
-      completedLessons: 0,
-      isEnrolled: false
+      updatedAt: newCourse.updatedAt.toISOString()
     };
     
     return NextResponse.json(formattedCourse, { status: 201 });
-    
   } catch (error) {
     console.error('Error creating course:', error);
     return NextResponse.json(
