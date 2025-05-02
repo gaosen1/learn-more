@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
 import styles from './page.module.css';
+import { getCurrentUser } from '@/utils/auth';
+import api from '@/utils/api';
 
 interface User {
   id: string;
@@ -31,39 +33,40 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUserData = async () => {
       setIsLoading(true);
-      
-      const token = localStorage.getItem('token');
-      if (!token) {
+      setError('');
+
+      const loggedInUser = getCurrentUser();
+      if (!loggedInUser) {
+        console.log('Profile: No user found in localStorage, redirecting to login.');
         router.push('/login');
         return;
       }
-      
+
       try {
-        const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data');
-        }
-        
-        const data = await response.json();
+        console.log('Profile: Fetching latest user data from /api/auth/me');
+        const response = await api.get('/auth/me');
+
+        const data = response.data;
+        console.log('Profile: User data fetched:', data.user);
         setUser(data.user);
         setFormData({
-          ...formData,
           name: data.user.name,
           email: data.user.email,
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
         });
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError('Failed to load profile information. Please try again later.');
+      } catch (err: any) {
+        console.error('Profile: Error fetching user data:', err);
+        setError('Failed to load profile information. You might need to log in again.');
+        if (err.response?.status === 401) {
+          router.push('/login?error=session_expired');
+        }
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchUserData();
   }, [router]);
 
@@ -139,7 +142,7 @@ export default function ProfilePage() {
     if (user?.avatar) {
       return <img src={user.avatar} alt={user.name} className={styles.avatarImage} />;
     }
-    return user?.name.charAt(0).toUpperCase();
+    return user?.name?.charAt(0).toUpperCase() || '?';
   };
 
   if (isLoading) {
@@ -156,7 +159,7 @@ export default function ProfilePage() {
     return (
       <MainLayout>
         <div className={styles.profileContainer}>
-          <div className={styles.error}>{error || 'Failed to load profile'}</div>
+          <div className={styles.error}>{error || 'Failed to load profile. Please try logging in again.'}</div>
         </div>
       </MainLayout>
     );

@@ -4,4 +4,5 @@ globs:
 alwaysApply: true
 ---
 网站面向英语国家，所以网页文案需要使用英语撰写；
-代码注释也要使用英语
+代码注释也要使用英语；
+前端请求后端 API 时，使用`import api from '@/utils/api';`

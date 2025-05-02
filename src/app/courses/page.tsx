@@ -5,6 +5,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './page.module.css';
+import api from '@/utils/api';
 
 interface Course {
   id: string;
@@ -27,32 +28,44 @@ export default function CoursesPage() {
   const categories = ['All', 'Web Development', 'Programming', 'Computer Science', 'Design', 'Data Science', 'Mobile Development'];
 
   useEffect(() => {
-    // Fetch courses from API
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/courses');
+        const response = await api.get('/courses');
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch courses');
+        const data = response.data;
+
+        if (!Array.isArray(data)) {
+          console.error('API Error or Invalid Data: Expected an array but received:', data);
+          setCourses([]);
+          throw new Error('Invalid data format received from API.');
         }
-        
-        const data = await response.json();
-        // Format API response data to match Course interface
-        const formattedCourses = data.map(course => ({
-          id: course.id,
-          title: course.title,
-          description: course.description,
-          imageUrl: course.imageUrl,
-          category: course.category,
-          author: course.author,
-          createdAt: course.createdAt,
-          lessonsCount: course.lessons.length
-        }));
-        
-        setCourses(formattedCourses);
+
+        console.log("Fetched courses data:", data);
+
+        const formattedCourses = data.map(course => {
+          if (!course || typeof course !== 'object') {
+            console.warn("Skipping invalid course item:", course);
+            return null;
+          }
+          return {
+            id: course.id,
+            title: course.title ?? 'Untitled Course',
+            description: course.description ?? '',
+            imageUrl: course.imageUrl ?? '/images/placeholder.png',
+            category: course.category ?? 'Uncategorized',
+            author: course.author ?? 'Unknown Author',
+            createdAt: course.createdAt,
+            lessonsCount: course.lessonsCount ?? 0
+          };
+        }).filter(course => course !== null);
+
+        console.log("Formatted courses for display:", formattedCourses);
+        setCourses(formattedCourses as Course[]);
+
       } catch (error) {
         console.error('Error fetching courses:', error);
+        setCourses([]);
       } finally {
         setLoading(false);
       }
@@ -63,9 +76,9 @@ export default function CoursesPage() {
 
   // Filter courses based on category and search term
   const filteredCourses = courses.filter(course => {
-    const matchesCategory = filter === 'all' || course.category.toLowerCase() === filter.toLowerCase();
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          course.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = filter === 'all' || (course.category && course.category.toLowerCase() === filter.toLowerCase());
+    const matchesSearch = (course.title && course.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
@@ -118,6 +131,11 @@ export default function CoursesPage() {
                       width={400}
                       height={225}
                       className={styles.image}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = '/images/placeholder.png';
+                      }}
                     />
                     <div className={styles.category}>{course.category}</div>
                   </div>
@@ -129,13 +147,15 @@ export default function CoursesPage() {
                         <span className={styles.author}>By {course.author}</span>
                         <span className={styles.lessons}>{course.lessonsCount} lessons</span>
                       </div>
-                      <span className={styles.courseDate}>
-                        {new Date(course.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </span>
+                      {course.createdAt && (
+                        <span className={styles.courseDate}>
+                          {new Date(course.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </Link>
