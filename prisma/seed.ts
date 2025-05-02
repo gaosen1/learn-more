@@ -15,14 +15,19 @@ const sampleImageUrls = [
 
 async function main() {
   try {
-    console.log('Creating sample data if necessary...');
-
-    // Check if data already exists (e.g., check for users)
-    const userCount = await prisma.user.count();
-    if (userCount > 0) {
-        console.log('Data already exists, skipping seed.');
-        return; // Exit if data exists
-    }
+    // --- Restore database clearing ---
+    console.log('Clearing existing data...');
+    // Clear in reverse order of dependency to avoid constraint errors
+    await prisma.userCourse.deleteMany({});
+    await prisma.solution.deleteMany({}); // Assuming Solution depends on Exercise/User
+    await prisma.exercise.deleteMany({}); // Assuming Exercise depends on User
+    await prisma.lesson.deleteMany({});
+    await prisma.section.deleteMany({});
+    await prisma.course.deleteMany({});
+    await prisma.subscription.deleteMany({});
+    await prisma.user.deleteMany({});
+    console.log('All existing data cleared.');
+    // --- End database clearing ---
 
     console.log('Creating sample data...');
     
@@ -33,7 +38,7 @@ async function main() {
       { name: 'Alex Johnson', email: 'alex.johnson@example.com', role: 'EDUCATOR' as UserRole },
       { name: 'Emma Wilson', email: 'emma.wilson@example.com', role: 'EDUCATOR' as UserRole },
       { name: 'Michael Brown', email: 'michael.brown@example.com', role: 'EDUCATOR' as UserRole },
-      { name: 'Sarah Parker', email: 'sarah.parker@example.com', role: 'EDUCATOR' as UserRole },
+      { name: 'Sarah Parker', email: 'sarah.parker@example.com', role: 'EDUCATOR' as UserRole }, // Added Sarah Parker
     ];
 
     // Use the same password for all users to simplify the example
@@ -41,6 +46,7 @@ async function main() {
 
     // Create users
     const createdEducators: User[] = [];
+    let sarahParkerId: number | null = null;
     for (const educator of educators) {
       const user = await prisma.user.create({
         data: {
@@ -48,11 +54,19 @@ async function main() {
           name: educator.name,
           password: hashedPassword,
           role: 'EDUCATOR',
-          avatar: `https://ui-avatars.com/api/?name=${educator.name.split('').map(n => n[0])}&background=random`,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(educator.name)}&background=random`, // Use encodeURIComponent
         },
       });
       createdEducators.push(user);
+      if (user.email === 'sarah.parker@example.com') {
+        sarahParkerId = user.id;
+      }
       console.log(`Created educator: ${user.name} (ID: ${user.id})`);
+    }
+    
+    if (!sarahParkerId) {
+      console.error('Could not find or create Sarah Parker user!');
+      return; // Exit if Sarah Parker wasn't created
     }
 
     // Create a student user
@@ -343,6 +357,76 @@ async function main() {
       }
     }
     
+    // --- Create specific courses for Sarah Parker --- 
+    console.log(`Creating specific courses for Sarah Parker (ID: ${sarahParkerId})...`);
+
+    const sarahCoursesData = [
+      {
+        title: 'Introduction to Web Development',
+        description: 'Learn the basics of HTML, CSS, and JavaScript to build your first website.',
+        imageUrl: sampleImageUrls[0], // Use a sample image
+        category: 'web development', // Assign a category
+        isPublic: true, // Status: published
+        lessons: [ // Add sample lessons
+          { title: 'HTML Basics', content: '...', order: 1 },
+          { title: 'CSS Fundamentals', content: '...', order: 2 },
+          { title: 'JavaScript Essentials', content: '...', order: 3 }
+        ]
+      },
+      {
+        title: 'Python Programming for Beginners',
+        description: 'A comprehensive introduction to Python for absolute beginners.',
+        imageUrl: sampleImageUrls[1],
+        category: 'programming',
+        isPublic: true, // Status: published
+        lessons: [
+          { title: 'Python Setup', content: '...', order: 1 },
+          { title: 'Variables and Data Types', content: '...', order: 2 },
+          { title: 'Control Flow', content: '...', order: 3 }
+        ]
+      },
+      {
+        title: 'Advanced React Patterns',
+        description: 'Master advanced React patterns and techniques for building complex applications.',
+        imageUrl: sampleImageUrls[3],
+        category: 'web development',
+        isPublic: false, // Status: draft
+        lessons: [
+          { title: 'Higher-Order Components', content: '...', order: 1 },
+          { title: 'Render Props', content: '...', order: 2 },
+          { title: 'React Hooks In-depth', content: '...', order: 3 }
+        ]
+      }
+    ];
+
+    for (const courseData of sarahCoursesData) {
+      const course = await prisma.course.create({
+        data: {
+          title: courseData.title,
+          description: courseData.description,
+          imageUrl: courseData.imageUrl,
+          category: courseData.category,
+          isPublic: courseData.isPublic,
+          authorId: sarahParkerId, // Assign Sarah as author
+          sections: { // Create default section and lessons
+            create: {
+              title: 'Course Content',
+              order: 1,
+              lessons: {
+                create: courseData.lessons.map(lesson => ({
+                  title: lesson.title,
+                  content: lesson.content || `Content for ${lesson.title}`,
+                  order: lesson.order
+                }))
+              }
+            }
+          }
+        },
+      });
+      console.log(`  Created course for Sarah: ${course.title} (ID: ${course.id})`);
+    }
+    // --- End Sarah Parker courses --- 
+
     // Enroll student in some courses
     console.log('Enrolling student in courses...');
     const courseIds = await prisma.course.findMany({

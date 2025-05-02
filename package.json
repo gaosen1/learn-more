@@ -10,7 +10,7 @@
     "db:fix-sequences": "node scripts/fix-db-sequence.js",
     "lint": "next lint",
     "postinstall": "prisma generate",
-    "db:seed": "prisma db seed",
+    "db:seed": "env-cmd -f .env.development prisma db seed",
     "db:setup": "node scripts/setup-db.js",
     "prisma:dev": "env-cmd -f .env.development prisma migrate dev",
     "db:studio": "env-cmd -f .env.development prisma studio"

@@ -1,6 +1,14 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import MainLayout from "@/components/layout/MainLayout";
 import Link from "next/link";
 import styles from "./page.module.css";
+import api from '@/utils/api';
+import { publishAuthChange, getCurrentUser } from '@/utils/auth';
+import { useToast } from '@/components/ui/toast';
+import { LoadingDots } from '@/components/ui/loading';
 
 // Sample course data
 const courses = [
@@ -31,12 +39,64 @@ const courses = [
 ];
 
 export default function Dashboard() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkAuthAndFetchUser = async () => {
+      const existingUser = getCurrentUser();
+
+      if (!existingUser) {
+        console.log('Dashboard: localStorage 中没有用户, 尝试从 /api/auth/me 获取');
+        try {
+          const response = await api.get('/auth/me');
+          const userData = response.data.user;
+
+          if (userData) {
+            console.log('Dashboard: 成功获取用户数据:', userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+            publishAuthChange(userData);
+            setUserName(userData.name);
+          } else {
+            console.warn('Dashboard: /api/auth/me 成功返回但没有用户数据。');
+            router.push('/login?error=auth_fetch_failed');
+          }
+        } catch (error: any) {
+          console.error('Dashboard: 从 /api/auth/me 获取用户数据失败:', error);
+          localStorage.removeItem('user');
+          publishAuthChange(null);
+          router.push('/login?error=session_expired');
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        console.log('Dashboard: 在 localStorage 中找到用户, 跳过获取。');
+        setUserName(existingUser.name);
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthAndFetchUser();
+  }, [router, toast]);
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="container flex justify-center items-center min-h-[calc(100vh-200px)]">
+          <LoadingDots size="lg" />
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className={styles.dashboard}>
         <div className="container">
           <div className={styles.header}>
-            <h1 className={styles.title}>My Courses</h1>
+            <h1 className={styles.title}>{userName ? `${userName}'s Courses` : 'My Courses'}</h1>
             <Link href="/create" className="btn btn-primary">
               Create New Course
             </Link>

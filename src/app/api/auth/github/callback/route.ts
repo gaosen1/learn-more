@@ -149,19 +149,16 @@ async function fetchWithLogging(url, options, retryCount = 2) {
 export async function GET(request: NextRequest) {
   console.log('GitHub OAuth callback received');
   
-  // Get the code parameter from GitHub callback
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   
   console.log('Code parameter present:', !!code);
   
   if (!code) {
-    // Redirect to login page if no code is provided
     return NextResponse.redirect(`${FRONTEND_URL}/login?error=github_auth_failed`);
   }
   
-  // Check GitHub connectivity before proceeding
-  await checkGitHubConnectivity();
+  // await checkGitHubConnectivity(); // Keep or remove connectivity check as needed
   
   try {
     console.log('Starting GitHub OAuth process with code:', code.substring(0, 4) + '...');
@@ -318,10 +315,29 @@ export async function GET(request: NextRequest) {
       role: user.role
     });
     
-    // Step 6: Redirect to frontend with token
-    console.log('OAuth flow completed successfully, redirecting to frontend...');
-    // Note: In production, use a more secure way to pass tokens, like httpOnly cookies
-    return NextResponse.redirect(`${FRONTEND_URL}/auth/callback?token=${token}&auth_redirect=true`);
+    // Step 6: Create redirect response and set cookie
+    console.log('OAuth flow completed successfully, setting cookie and redirecting to dashboard...');
+    
+    // Define the final redirect URL
+    const redirectUrl = `${FRONTEND_URL}/dashboard`; 
+    
+    // Create the redirect response
+    const response = NextResponse.redirect(redirectUrl);
+
+    // Set the token as an HttpOnly cookie
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30, // 30 days expiry
+      sameSite: 'lax'
+    });
+
+    // Return the response with the cookie set
+    return response;
+    
+    // OLD Redirect logic:
+    // return NextResponse.redirect(`${FRONTEND_URL}/auth/callback?token=${token}&auth_redirect=true`);
     
   } catch (error) {
     console.error('GitHub OAuth Error:', error);

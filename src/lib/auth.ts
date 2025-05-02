@@ -38,6 +38,7 @@ export function verifyToken(token: string): TokenPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET) as TokenPayload;
   } catch (error) {
+    console.error("Token verification failed:", error); // Log error for debugging
     return null;
   }
 }
@@ -53,15 +54,39 @@ export function extractTokenFromHeader(authHeader: string | null): string | null
   return authHeader.substring(7); // Remove 'Bearer ' prefix
 }
 
-// Extract user information from request
+// Extract user information from request (Header or Cookie)
 export function getUserFromRequest(req: NextRequest): TokenPayload | null {
+  let token: string | null = null;
+
+  // 1. Try getting token from Authorization header
   const authHeader = req.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+    console.log("Token found in Authorization header"); // Debug log
+  }
+
+  // 2. If not in header, try getting token from 'token' cookie
+  if (!token) {
+    // For App Router API Routes, access cookies via req.cookies
+    const tokenCookie = req.cookies.get('token'); 
+    if (tokenCookie) {
+      token = tokenCookie.value;
+      console.log("Token found in 'token' cookie"); // Debug log
+    }
+  }
+
+  // 3. If no token found in either place, return null
+  if (!token) {
+    console.log("Token not found in header or cookie"); // Debug log
     return null;
   }
-  
-  const token = authHeader.split(' ')[1];
-  return verifyToken(token);
+
+  // 4. Verify the found token
+  const verifiedPayload = verifyToken(token);
+  if (!verifiedPayload) {
+    console.log("Token verification failed for token:", token); // Debug log
+  }
+  return verifiedPayload;
 }
 
 // Check if user has educator role

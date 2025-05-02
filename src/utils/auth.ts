@@ -10,7 +10,6 @@ interface RegisterCredentials extends LoginCredentials {
 }
 
 interface AuthResponse {
-  token: string;
   user: {
     id: number;
     name: string;
@@ -41,7 +40,6 @@ export const register = async (credentials: RegisterCredentials): Promise<AuthRe
 };
 
 export const logout = (): void => {
-  localStorage.removeItem('token');
   localStorage.removeItem('user');
   publishAuthChange(null);
 };
@@ -58,7 +56,6 @@ export const getGitHubCallback = async (code: string): Promise<AuthResponse> => 
 };
 
 const handleAuthResponse = (data: AuthResponse): AuthResponse => {
-  localStorage.setItem('token', data.token);
   localStorage.setItem('user', JSON.stringify(data.user));
   
   // Publish auth change event
@@ -101,7 +98,7 @@ export const parseToken = (token: string): AuthResponse['user'] | null => {
 };
 
 export const isAuthenticated = (): boolean => {
-  return !!localStorage.getItem('token');
+  return !!localStorage.getItem('user');
 };
 
 // Helper function to initialize auth state when app loads
@@ -112,19 +109,4 @@ export const initAuthState = (): void => {
   if (user) {
     publishAuthChange(user);
   } 
-  // Otherwise, try to parse from token
-  else {
-    const token = localStorage.getItem('token');
-    if (token) {
-      const tokenUser = parseToken(token);
-      if (tokenUser) {
-        // Save user data to localStorage
-        localStorage.setItem('user', JSON.stringify(tokenUser));
-        publishAuthChange(tokenUser);
-      } else {
-        // Invalid token, clear auth state
-        logout();
-      }
-    }
-  }
 }; 

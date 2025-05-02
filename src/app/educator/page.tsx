@@ -6,6 +6,7 @@ import { useUser } from '@/components/UserAuthProvider';
 import MainLayout from '@/components/layout/MainLayout';
 import Link from 'next/link';
 import styles from './page.module.css';
+import axios from 'axios';
 
 interface Course {
   id: number;
@@ -14,6 +15,8 @@ interface Course {
   enrollments: number;
   status: 'published' | 'draft';
   lastUpdated: string;
+  imageUrl?: string;
+  category?: string;
 }
 
 export default function EducatorPortal() {
@@ -21,6 +24,7 @@ export default function EducatorPortal() {
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Redirect if user is not authenticated or not an educator
@@ -29,42 +33,30 @@ export default function EducatorPortal() {
       return;
     }
 
-    // Fetch educator courses
+    // Fetch educator courses from API
     const fetchCourses = async () => {
+      setIsLoadingCourses(true);
+      setError(null);
       try {
-        // In a real app, this would be an API call
-        // For now, we'll use sample data
-        const sampleCourses: Course[] = [
-          {
-            id: 1,
-            title: 'Introduction to Web Development',
-            description: 'Learn the basics of HTML, CSS, and JavaScript to build your first website.',
-            enrollments: 125,
-            status: 'published',
-            lastUpdated: '2023-04-15'
-          },
-          {
-            id: 2,
-            title: 'Python Programming for Beginners',
-            description: 'A comprehensive introduction to Python for absolute beginners.',
-            enrollments: 89,
-            status: 'published',
-            lastUpdated: '2023-03-22'
-          },
-          {
-            id: 3,
-            title: 'Advanced React Patterns',
-            description: 'Master advanced React patterns and techniques for building complex applications.',
-            enrollments: 0,
-            status: 'draft',
-            lastUpdated: '2023-04-02'
-          }
-        ];
+        // Use NEXT_PUBLIC_API_URL environment variable
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        if (!apiUrl) {
+          console.error('Error: NEXT_PUBLIC_API_URL environment variable is not set.');
+          setError('API URL configuration error.');
+          setIsLoadingCourses(false);
+          return;
+        }
         
-        setCourses(sampleCourses);
-        setIsLoadingCourses(false);
-      } catch (error) {
-        console.error('Error fetching courses:', error);
+        // Fetch courses specifically for the educator context
+        const response = await axios.get<Course[]>(`${apiUrl}/courses?context=educator`);
+        
+        // Assuming the API returns data in the format matching the updated Course interface
+        setCourses(response.data);
+
+      } catch (err) {
+        console.error('Error fetching courses:', err);
+        setError('Failed to load courses. Please try again later.');
+      } finally {
         setIsLoadingCourses(false);
       }
     };
@@ -80,6 +72,16 @@ export default function EducatorPortal() {
         <div className={styles.loadingContainer}>
           <div className={styles.loadingSpinner}></div>
           <p>Loading educator portal...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="container">
+          <div className={styles.errorState}>{error}</div>
         </div>
       </MainLayout>
     );
@@ -142,7 +144,7 @@ export default function EducatorPortal() {
                 <div key={course.id} className={styles.tableRow}>
                   <div className={styles.tableCell}>
                     <h3 className={styles.courseTitle}>{course.title}</h3>
-                    <p className={styles.courseDescription}>{course.description}</p>
+                    <p className={styles.courseDescription}>{course.description ?? 'No description available.'}</p>
                   </div>
                   <div className={styles.tableCell} data-label="Status">
                     <span className={`${styles.statusBadge} ${styles[course.status]}`}>
@@ -150,7 +152,7 @@ export default function EducatorPortal() {
                     </span>
                   </div>
                   <div className={styles.tableCell} data-label="Enrollments">{course.enrollments}</div>
-                  <div className={styles.tableCell} data-label="Last Updated">{course.lastUpdated}</div>
+                  <div className={styles.tableCell} data-label="Last Updated">{new Date(course.lastUpdated).toLocaleDateString()}</div>
                   <div className={styles.tableCell} data-label="Actions">
                     <div className={styles.actionButtons}>
                       <Link href={`/course/${course.id}`} className={styles.actionButton}>
