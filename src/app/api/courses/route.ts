@@ -5,103 +5,113 @@ import { getUserFromRequest, isEducator } from '@/lib/auth';
 // Remove sample data
 // const sampleCourses = [...];
 
-// Get courses: public courses for guests/students, authored courses for educators, 
-// or all courses for admin (adjust admin logic as needed)
+// Get courses: 
+// - context=educator: authored courses for educators
+// - context=my-courses: enrolled courses for the current user
+// - default: public courses for guests/students
 export async function GET(request: NextRequest) {
   try {
     const currentUser = getUserFromRequest(request);
-    // const isEducatorPortalRequest = request.nextUrl.searchParams.get('context') === 'educator';
-    const context = request.nextUrl.searchParams.get('context'); // Read context once
+    const context = request.nextUrl.searchParams.get('context');
 
-    let courses: any[] = []; // Default to empty array
-    let whereClause: any = {}; // Define whereClause structure
+    let courses: any[] = [];
+    let whereClause: any = {};
 
-    // Only proceed if user is an educator AND the request is for the educator portal context
-    // if (currentUser && isEducator(currentUser) && isEducatorPortalRequest) {
     if (currentUser && isEducator(currentUser) && context === 'educator') {
       // --- Educator fetching their own courses ---
-      console.log(`API: Fetching courses for educator ID: ${currentUser.id} (context: educator)`); // Log educator ID
-      // courses = await prisma.course.findMany({
-      //   where: { authorId: currentUser.id }, // Filter strictly by authorId
-      //   include: {
-      //     author: {
-      //       select: {
-      //         id: true,
-      //         name: true,
-      //         avatar: true
-      //       }
-      //     },
-      //     _count: {
-      //       select: { enrolledUsers: true },
-      //     },
-      //   },
-      //   orderBy: {
-      //     updatedAt: 'desc'
-      //   }
-      // });
-      whereClause = { authorId: currentUser.id }; // Fetch all courses by this author
+      console.log(`API: Fetching courses for educator ID: ${currentUser.id} (context: educator)`);
+      whereClause = { authorId: currentUser.id };
 
       courses = await prisma.course.findMany({
         where: whereClause,
         include: {
           author: { select: { id: true, name: true, avatar: true } },
-          _count: { select: { enrolledUsers: true, lessons: true } }, // Also count lessons
+          _count: { select: { enrolledUsers: true, lessons: true } },
         },
         orderBy: { updatedAt: 'desc' }
       });
 
-      // Format courses for educator portal
+      // Format for educator dashboard
       const formattedCourses = courses.map(course => ({
         id: course.id,
         title: course.title,
-        // description: course.description, // Keep description short if needed later
-        description: course.description.length > 100 ? course.description.substring(0, 97) + '...' : course.description, // Example: Shorten description
+        description: course.description.length > 100 ? course.description.substring(0, 97) + '...' : course.description,
         imageUrl: course.imageUrl,
         category: course.category,
         isPublic: course.isPublic,
-        status: course.isPublic ? 'published' : 'draft', // Educator specific status
-        // author: course.author.name, // Author info might be redundant here
-        author: course.author.name, // Keep author name maybe?
+        status: course.isPublic ? 'published' : 'draft',
+        author: course.author.name,
         authorId: course.author.id,
-        // authorAvatar: course.author.avatar,
         createdAt: course.createdAt.toISOString(),
         updatedAt: course.updatedAt.toISOString(),
-        // lastUpdated: course.updatedAt.toISOString(), // Redundant with updatedAt
         lessonsCount: course._count?.lessons ?? 0,
         enrollments: course._count?.enrolledUsers ?? 0,
       }));
       return NextResponse.json(formattedCourses);
 
+    } else if (currentUser && context === 'my-courses') {
+      // --- Student/User fetching their enrolled courses ("My Courses") ---
+      console.log(`API: Fetching enrolled courses for user ID: ${currentUser.id} (context: my-courses)`);
+      
+      // Find all enrollments for the current user
+      const enrollments = await prisma.userCourse.findMany({
+        where: { userId: currentUser.id },
+        include: {
+          course: { // Include the actual course data
+            include: {
+              author: { select: { id: true, name: true, avatar: true } },
+              _count: { select: { lessons: true } } // Need total lessons count
+            }
+          }
+        },
+        orderBy: { // Order by enrollment date or course update date?
+          enrolledAt: 'desc' 
+        }
+      });
+      
+      // Format the enrolled courses data, including progress
+      const formattedCourses = enrollments.map(enrollment => ({
+         id: enrollment.course.id,
+         title: enrollment.course.title,
+         description: enrollment.course.description, // Maybe shorten this too?
+         imageUrl: enrollment.course.imageUrl,
+         category: enrollment.course.category,
+         isPublic: enrollment.course.isPublic, // Might be useful to know
+         author: enrollment.course.author.name,
+         createdAt: enrollment.course.createdAt.toISOString(),
+         lessonsCount: enrollment.course._count?.lessons ?? 0,
+         // Add progress info from the enrollment record
+         progress: enrollment.progress,
+         completedLessons: enrollment.completedLessons,
+         enrolledAt: enrollment.enrolledAt.toISOString()
+       }));
+      
+      return NextResponse.json(formattedCourses);
+      
     } else {
        // --- Public course browsing (Default case) ---
-       // console.log('Returning empty array - User not educator or context mismatch');
-       // return NextResponse.json([]); 
-       console.log(`API: Fetching public courses for general browsing`);
+       console.log(`API: Fetching public courses for general browsing (User: ${currentUser?.id ?? 'Guest'})`);
        whereClause = { isPublic: true }; // Fetch only public courses
 
        courses = await prisma.course.findMany({
          where: whereClause,
          include: {
-           author: { select: { id: true, name: true, avatar: true } }, // Need author name
-           _count: { select: { lessons: true } }, // Need lesson count
+           author: { select: { id: true, name: true, avatar: true } },
+           _count: { select: { lessons: true } },
          },
-         orderBy: { createdAt: 'desc' } // Order by creation date for public view
+         orderBy: { createdAt: 'desc' } 
        });
 
        // Format for public course list page
        const formattedCourses = courses.map(course => ({
          id: course.id,
          title: course.title,
-         description: course.description, // Full description is fine here
+         description: course.description,
          imageUrl: course.imageUrl,
          category: course.category,
-         // isPublic: course.isPublic, // Maybe not needed for public view?
-         author: course.author.name, // Essential for public view
-         // authorId: course.author.id, // Maybe not needed
-         // authorAvatar: course.author.avatar, // Maybe not needed
+         author: course.author.name,
          createdAt: course.createdAt.toISOString(),
-         // updatedAt: course.updatedAt.toISOString(), // Maybe not needed
-         lessonsCount: course._count?.lessons ?? 0, // Essential for public view
+         lessonsCount: course._count?.lessons ?? 0,
        }));
        return NextResponse.json(formattedCourses);
     }

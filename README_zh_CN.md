@@ -4,3 +4,5 @@ POSTGRES_PRISMA_URL=postgres://neondb_owner:npg_kgw4Cn8SaATX@ep-square-water-a5y
 ```
 
 然后访问 `http://localhost:5555/`
+
+一个课程(course)包含许多章节(section)，每个章节包含许多时(lesson)
