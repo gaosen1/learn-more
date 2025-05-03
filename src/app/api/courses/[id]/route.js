@@ -5,7 +5,7 @@ import { getUserFromRequest, isEducator } from '@/lib/auth';
 // Get a single course detail
 export async function GET(request, { params }) {
   try {
-    // 确保在使用params.id前先await解析params
+    // Ensure params are resolved before use
     const resolvedParams = await params;
     const currentUser = getUserFromRequest(request);
     const courseId = parseInt(resolvedParams.id, 10);
@@ -17,7 +17,7 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Get course details, including author and course chapters
+    // Get course details, including author, sections with lessons, and enrollments
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
@@ -29,12 +29,19 @@ export async function GET(request, { params }) {
             avatar: true
           }
         },
-        lessons: {
-          orderBy: {
-            order: 'asc'
+        // Include sections, and within sections, include lessons
+        sections: {
+          orderBy: { order: 'asc' }, // Order sections
+          include: {
+            lessons: {
+              orderBy: { order: 'asc' } // Order lessons within each section
+            }
           }
         },
-        enrolledUsers: true
+        // Include enrollments to determine progress and completion status
+        enrolledUsers: {
+          where: { userId: currentUser?.id ?? -1 } // Fetch only current user's enrollment or none if guest
+        }
       }
     });
     
@@ -46,21 +53,49 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Check course access permission
+    // --- Access Control (Moved after fetching course) --- 
     const isAuthor = currentUser && course.authorId === currentUser.id;
+    // Allow access if course is public, or if user is the author
     if (!course.isPublic && !isAuthor) {
-      return NextResponse.json(
-        { error: 'No permission to access this course' },
-        { status: 403 }
-      );
+       // Check if the user is enrolled (even if not public/author)
+       // Need to fetch enrollment status separately if needed for private courses
+       // For now, restrict access strictly
+       // TODO: Refine access control for enrolled users of private courses if needed
+       const userEnrollmentCheck = currentUser ? await prisma.userCourse.findUnique({
+         where: { userId_courseId: { userId: currentUser.id, courseId: courseId } }
+       }) : null;
+       
+       if (!userEnrollmentCheck) {
+         return NextResponse.json(
+           { error: 'Access denied. This course is private.' }, 
+           { status: 403 }
+         );
+       }
+       // If enrolled, allow access (isEnrolled flag will be set later)
     }
+    // --- End Access Control ---
     
-    // Find current user's enrollment information
-    const userEnrollment = currentUser
-      ? course.enrolledUsers.find(enrollment => enrollment.userId === currentUser.id)
-      : null;
+    // Find current user's enrollment information from the fetched data
+    const userEnrollment = course.enrolledUsers.length > 0 ? course.enrolledUsers[0] : null;
     
-    // Format response data
+    // --- Format response data --- 
+    // Flatten lessons from sections into a single array
+    const allLessons = course.sections.flatMap(section => 
+        section.lessons.map(lesson => ({
+            id: lesson.id,
+            title: lesson.title,
+            content: lesson.content, // Consider omitting content in list view if large
+            order: lesson.order, // Keep order if needed by frontend
+            sectionId: lesson.sectionId, // Keep sectionId if needed
+            // Calculate completion status based on userEnrollment
+            completed: userEnrollment 
+              ? JSON.parse(userEnrollment.completedLessonIds || '[]').includes(lesson.id)
+              : false
+        }))
+    );
+    // Re-sort the flattened list just in case (optional, depends on flatMap behavior guarantee)
+    // allLessons.sort((a, b) => a.order - b.order); // Might need section order too if mixing
+
     const formattedCourse = {
       id: course.id,
       title: course.title,
@@ -73,18 +108,15 @@ export async function GET(request, { params }) {
       authorAvatar: course.author.avatar,
       createdAt: course.createdAt.toISOString(),
       updatedAt: course.updatedAt.toISOString(),
-      lessons: course.lessons.map(lesson => ({
-        id: lesson.id,
-        title: lesson.title,
-        content: lesson.content,
-        completed: userEnrollment 
-          ? JSON.parse(userEnrollment.completedLessonIds || '[]').includes(lesson.id)
-          : false
-      })),
+      // Use the flattened and formatted lessons array
+      lessons: allLessons, 
+      // Use progress/completion data from the fetched enrollment record
       progress: userEnrollment ? userEnrollment.progress : 0,
       completedLessons: userEnrollment ? userEnrollment.completedLessons : 0,
       isEnrolled: !!userEnrollment,
       isAuthor
+      // Include sections if the frontend needs the structure (optional)
+      // sections: course.sections // Could return the nested structure too
     };
     
     return NextResponse.json(formattedCourse);
