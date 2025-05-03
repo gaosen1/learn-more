@@ -17,6 +17,9 @@ const navigation = [
   { name: 'About', href: '/about' },
 ];
 
+// --- Add Playground to base navigation for ALL users --- 
+navigation.push({ name: 'Playground', href: '/playground' });
+
 interface NavigationItem {
   name: string;
   href: string;
@@ -136,13 +139,11 @@ export default function Header() {
   };
 
   // Collect navigation items including conditional ones for authenticated users
-  const navItems = [...navigation];
+  const navItems = [...navigation]; // Now includes Playground by default
   if (isAuthenticated) {
     navItems.push({ name: 'My Courses', href: '/dashboard' });
     if (user?.role === 'EDUCATOR') {
       navItems.push({ name: 'Create Course', href: '/create' });
-    }
-    if (user?.role === 'EDUCATOR') {
       navItems.push({ name: 'Educator Portal', href: '/educator' });
     }
   }

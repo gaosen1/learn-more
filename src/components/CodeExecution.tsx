@@ -47,31 +47,41 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
       const loadPyodideEnvironment = async () => {
         try {
           setPyodideLoading(true);
-          // 动态加载Pyodide脚本
+          console.log("[Pyodide Loader] Starting load...");
+          // Load pyodide.js from the local public directory
           const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+          script.src = '/pyodide/pyodide.js'; // Load from local path
           script.async = true;
           script.onload = async () => {
+            console.log("[Pyodide Loader] Script loaded from CDN.");
             try {
-              window.pyodide = await window.loadPyodide({
-                indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/',
-              });
+              console.log("[Pyodide Loader] Calling window.loadPyodide()...");
+              // No need for indexURL when loading locally, paths should resolve correctly
+              window.pyodide = await window.loadPyodide({}); 
+              console.log("[Pyodide Loader] Pyodide loaded and initialized successfully.");
               setPyodideReady(true);
-            } catch (err) {
-              console.error('Failed to load Pyodide:', err);
-              setError('Failed to load Python runtime. Please refresh the page and try again.');
+            } catch (loadErr) {
+              console.error('[Pyodide Loader] Error during window.loadPyodide():', loadErr);
+              setError(`Failed to initialize Python runtime: ${loadErr instanceof Error ? loadErr.message : String(loadErr)}. Please refresh.`);
             } finally {
               setPyodideLoading(false);
+              console.log("[Pyodide Loader] Load process finished (success or inner error).");
             }
           };
-          script.onerror = () => {
-            setError('Failed to load Python environment. Please check your network connection and refresh the page.');
+          script.onerror = (event: Event | string) => {
+            console.error('[Pyodide Loader] Failed to load script from CDN. Event:', event);
+            // Try to get more specific error information if it's an Event object
+            let errorDetails = 'Check network connection or browser console (F12) for more details.';
+            if (event instanceof Event && event.target instanceof HTMLScriptElement) {
+              errorDetails = `Failed to load script: ${event.target.src}. ${errorDetails}`;
+            }
+            setError(`Failed to load Python script from CDN. ${errorDetails} Please refresh.`);
             setPyodideLoading(false);
           };
           document.body.appendChild(script);
-        } catch (err) {
-          console.error('Failed to load Pyodide:', err);
-          setError('Error initializing Python environment.');
+        } catch (initErr) {
+          console.error('[Pyodide Loader] Error setting up script loading:', initErr);
+          setError(`Error initializing Python environment loading: ${initErr instanceof Error ? initErr.message : String(initErr)}`);
           setPyodideLoading(false);
         }
       };
@@ -199,7 +209,7 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
       {pyodideLoading && (
         <div className={styles.loadingState}>
           <Spinner size="md" />
-          <p>Loading Python runtime environment...</p>
+          <p>Loading Python Runtime Environment... (this may take a moment)</p>
         </div>
       )}
 
