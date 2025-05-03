@@ -354,4 +354,229 @@
 .summaryValue {
   flex: 1;
   color: var(--gray-900);
-} 
+}
+
+/* --- Step 1: Creation Method Styles --- */
+
+.stepContent {
+  /* Base styles for step container if needed */
+}
+
+.stepTitle {
+  /* Ensure title style is defined, add margin below */
+  margin-bottom: 1.5rem; /* Or adjust as needed */
+}
+
+.optionsContainer {
+  display: flex;
+  flex-direction: column; /* Stack cards vertically by default */
+  gap: 1.5rem; /* Space between cards */
+}
+
+/* Responsive layout for the cards within optionsContainer */
+@media (min-width: 768px) { /* Adjust breakpoint as needed */
+  .optionsContainer {
+    flex-direction: row; /* Place cards side-by-side on larger screens */
+  }
+}
+
+.creationOptionCard {
+  border: 1px solid var(--gray-200);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Allow cards to grow and share space equally in row layout */
+  /* Consider a min-width if needed on larger screens */
+  /* min-width: 300px; */
+}
+
+.creationOptionCard .subheading {
+  margin-bottom: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600; /* Make subheading bold */
+}
+
+.creationOptionCard .description {
+  font-size: 0.9rem;
+  color: var(--gray-700);
+  margin-bottom: 1rem;
+  flex-grow: 1; /* Push button to the bottom */
+}
+
+.creationOptionCard .descriptionSmall {
+   font-size: 0.8rem;
+   color: var(--gray-600);
+   margin-bottom: 0.75rem;
+   /* Ensure code tag inside inherits or has specific style */
+}
+.creationOptionCard .descriptionSmall .code {
+  background-color: var(--gray-100);
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.creationOptionCard .buttonPrimary {
+  margin-top: auto; /* Push button to bottom */
+  align-self: flex-start; /* Align button left */
+}
+
+/* CSV Upload specific styles */
+.uploadArea {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem; /* Add space above upload area */
+}
+
+.fileInputHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.uploadButton {
+  /* Inherit from .button or define specific styles */
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.uploadButton.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fileNameDisplay {
+  font-size: 0.85rem;
+  color: var(--gray-700);
+  background-color: var(--gray-100);
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px; /* Adjust max width */
+}
+
+.downloadLink {
+  font-size: 0.85rem;
+  color: var(--primary-600);
+  text-decoration: none;
+  margin-left: auto; /* Push download link to the right within the flex row */
+  white-space: nowrap;
+}
+.downloadLink:hover {
+  text-decoration: underline;
+}
+
+/* Compact Error/Loading messages */
+.errorMessageCompact,
+.loadingMessageCompact {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 0.5rem; /* Add padding for better visibility */
+  border-radius: 0.25rem;
+}
+.loadingMessageCompact {
+  color: var(--gray-700);
+  background-color: var(--gray-50);
+}
+.errorMessageCompact {
+   color: var(--red-700); /* Darker red for text */
+   background-color: var(--red-50); /* Light red background */
+   border: 1px solid var(--red-200); /* Red border */
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-animation 0.75s linear infinite;
+  margin-left: 0.5em;
+  vertical-align: text-bottom;
+}
+@keyframes spinner-animation {
+  to { transform: rotate(360deg); }
+}
+
+/* General Button Styles (ensure these match your project's system) */
+.button {
+   padding: 0.6rem 1.2rem;
+   border-radius: 0.375rem;
+   border: 1px solid transparent;
+   font-size: 0.9rem;
+   font-weight: 500;
+   cursor: pointer;
+   transition: all 0.2s ease-in-out;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   text-decoration: none; /* Remove underline from button-styled labels/links */
+}
+.button:hover {
+   text-decoration: none;
+}
+
+.buttonPrimary {
+   background-color: var(--primary-600);
+   color: white;
+   border-color: var(--primary-600);
+}
+.buttonPrimary:hover {
+   background-color: var(--primary-700);
+   border-color: var(--primary-700);
+}
+.buttonOutline { /* Example for outline style */
+   background-color: white;
+   color: var(--gray-700);
+   border-color: var(--gray-300);
+}
+.buttonOutline:hover {
+   background-color: var(--gray-50);
+}
+
+/* Ensure .btn classes use the same base if mixed */
+.btn { /* Map .button styles to .btn */
+  padding: 0.6rem 1.2rem;
+   border-radius: 0.375rem;
+   border: 1px solid transparent;
+   font-size: 0.9rem;
+   font-weight: 500;
+   cursor: pointer;
+   transition: all 0.2s ease-in-out;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   text-decoration: none;
+}
+.btn:hover {
+   text-decoration: none;
+}
+.btn-primary { /* Map .buttonPrimary */
+   background-color: var(--primary-600);
+   color: white;
+   border-color: var(--primary-600);
+}
+.btn-primary:hover { /* Map hover */
+   background-color: var(--primary-700);
+   border-color: var(--primary-700);
+}
+/* ... Add mappings for other .btn styles if needed ... */
+
+
+/* --- End Step 1 Styles --- */ 

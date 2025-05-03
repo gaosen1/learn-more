@@ -14,7 +14,7 @@ interface Course {
   description: string;
   enrollments: number;
   status: 'published' | 'draft';
-  lastUpdated: string;
+  updatedAt: string;
   imageUrl?: string;
   category?: string;
 }
@@ -157,7 +157,7 @@ export default function EducatorPortal() {
                     </span>
                   </div>
                   <div className={styles.tableCell} data-label="Enrollments">{course.enrollments}</div>
-                  <div className={styles.tableCell} data-label="Last Updated">{new Date(course.lastUpdated).toLocaleDateString()}</div>
+                  <div className={styles.tableCell} data-label="Last Updated">{new Date(course.updatedAt).toLocaleDateString()}</div>
                   <div className={styles.tableCell} data-label="Actions">
                     <div className={styles.actionButtons}>
                       <Link href={`/course/${course.id}`} className={styles.actionButton}>
@@ -166,9 +166,9 @@ export default function EducatorPortal() {
                       <Link href={`/course/${course.id}/edit`} className={styles.actionButton}>
                         Edit
                       </Link>
-                      <Link href={`/course/${course.id}/analytics`} className={styles.actionButton}>
+                      {/* <Link href={`/course/${course.id}/analytics`} className={styles.actionButton}>
                         Analytics
-                      </Link>
+                      </Link> */}
                       <button 
                         onClick={() => handleTogglePublishStatus(course.id, course.status)}
                         className={`${styles.actionButton} ${course.status === 'published' ? styles.unpublishButton : styles.publishButton}`}

@@ -74,20 +74,22 @@
 
 .tableHeader {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  padding: 1rem;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+  padding: 1rem 0.5rem;
   background-color: var(--gray-50);
   border-bottom: 1px solid var(--gray-200);
   font-weight: 600;
   color: var(--gray-700);
+  gap: 1rem;
 }
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  padding: 1rem;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+  padding: 1rem 0.5rem;
   border-bottom: 1px solid var(--gray-200);
   align-items: center;
+  gap: 1rem;
 }
 
 .tableRow:last-child {
@@ -99,6 +101,18 @@
 }
 
 .tableCell {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.tableCell > .courseTitle,
+.tableCell > .courseDescription,
+.tableCell > span {
+  padding: 0.5rem;
+}
+
+.tableCell[data-label="Actions"] .actionButtons {
   padding: 0.5rem;
 }
 
