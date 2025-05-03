@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
 import styles from './CodeExecution.module.css';
 
-// 定义Pyodide类型
+// Define Pyodide type
 declare global {
   interface Window {
     pyodide: any;
@@ -24,6 +24,12 @@ interface CodeExecutionProps {
   autoGrade?: boolean;
 }
 
+// Helper type for execution result
+type ExecutionResult = {
+  output: string;
+  error: string | null;
+};
+
 const CodeExecution: React.FC<CodeExecutionProps> = ({
   code,
   testCases = [],
@@ -39,38 +45,41 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
     output: string;
     expectedOutput: string;
     description: string;
+    error?: string | null; // Add error field to test results
   }>>([]);
 
-  // 加载Pyodide
+  // Load Pyodide from CDN
   useEffect(() => {
     if (!window.pyodide && !pyodideLoading) {
       const loadPyodideEnvironment = async () => {
         try {
           setPyodideLoading(true);
-          console.log("[Pyodide Loader] Starting load...");
-          // Load pyodide.js from the local public directory
+          console.log("[Pyodide Loader] Starting load from CDN...");
+          const cdnUrl = "https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js";
+          const indexUrl = "https://cdn.jsdelivr.net/pyodide/v0.27.5/full/";
+
+          // Create script tag to load from CDN
           const script = document.createElement('script');
-          script.src = '/pyodide/pyodide.js'; // Load from local path
+          script.src = cdnUrl;
           script.async = true;
           script.onload = async () => {
             console.log("[Pyodide Loader] Script loaded from CDN.");
             try {
               console.log("[Pyodide Loader] Calling window.loadPyodide()...");
-              // No need for indexURL when loading locally, paths should resolve correctly
-              window.pyodide = await window.loadPyodide({}); 
-              console.log("[Pyodide Loader] Pyodide loaded and initialized successfully.");
+              // Pass indexURL when loading from CDN
+              window.pyodide = await window.loadPyodide({ indexURL: indexUrl }); 
+              console.log("[Pyodide Loader] Pyodide loaded and initialized successfully from CDN.");
               setPyodideReady(true);
             } catch (loadErr) {
-              console.error('[Pyodide Loader] Error during window.loadPyodide():', loadErr);
-              setError(`Failed to initialize Python runtime: ${loadErr instanceof Error ? loadErr.message : String(loadErr)}. Please refresh.`);
+              console.error('[Pyodide Loader] Error during window.loadPyodide() from CDN:', loadErr);
+              setError(`Failed to initialize Python runtime from CDN: ${loadErr instanceof Error ? loadErr.message : String(loadErr)}. Check console/network tab.`);
             } finally {
               setPyodideLoading(false);
-              console.log("[Pyodide Loader] Load process finished (success or inner error).");
+              console.log("[Pyodide Loader] CDN load process finished.");
             }
           };
           script.onerror = (event: Event | string) => {
             console.error('[Pyodide Loader] Failed to load script from CDN. Event:', event);
-            // Try to get more specific error information if it's an Event object
             let errorDetails = 'Check network connection or browser console (F12) for more details.';
             if (event instanceof Event && event.target instanceof HTMLScriptElement) {
               errorDetails = `Failed to load script: ${event.target.src}. ${errorDetails}`;
@@ -80,8 +89,8 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
           };
           document.body.appendChild(script);
         } catch (initErr) {
-          console.error('[Pyodide Loader] Error setting up script loading:', initErr);
-          setError(`Error initializing Python environment loading: ${initErr instanceof Error ? initErr.message : String(initErr)}`);
+          console.error('[Pyodide Loader] Error setting up CDN script loading:', initErr);
+          setError(`Error initializing Python environment loading from CDN: ${initErr instanceof Error ? initErr.message : String(initErr)}`);
           setPyodideLoading(false);
         }
       };
@@ -90,40 +99,107 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
     }
   }, [pyodideLoading]);
 
-  // Execute code
-  const runCode = async () => {
-    if (!pyodideReady) {
-      setError('Python environment is not ready yet. Please wait.');
-      return;
+  // Helper function to execute Python code with proper I/O handling
+  const executePython = async (pythonCode: string, input?: string): Promise<ExecutionResult> => {
+    if (!pyodideReady || !window.pyodide) {
+      throw new Error('Python environment is not ready yet.');
     }
 
+    let stdout: string[] = [];
+    let stderr: string[] = [];
+    let inputBuffer = input ? input.split('\\n') : []; // Keep this for potential future use or remove if definitely not needed
+    let inputIndex = 0; // Keep this for potential future use or remove if definitely not needed
+
+    // Remove the stdin function
+    /*
+    const stdin = () => {
+      if (inputIndex < inputBuffer.length) {
+        const line = inputBuffer[inputIndex];
+        inputIndex++;
+        return line;
+      }
+      return null;
+    };
+    */
+
+    try {
+      // Prepare the full Python code to execute
+      let fullCode = pythonCode;
+      // Always prepend stdin setup, even if input is empty/null/undefined
+      // Use empty string '' for StringIO if input is not provided
+      const setupInput = input || ''; 
+      // Escape triple quotes and backslashes within the input string
+      const escapedInput = setupInput
+          .replace(/\\/g, '\\\\') // Escape backslashes first
+          .replace(/"""/g, '\\"\\"\\"'); // Escape triple quotes
+
+      // Use triple quotes for the StringIO content to handle multi-line input naturally
+      const setupCode = `
+import sys
+import io
+sys.stdin = io.StringIO("""${escapedInput}""")
+`;
+      fullCode = setupCode + '\n' + pythonCode; // Prepend setup code
+      
+
+      // --- DEBUG LOG --- Print code and input
+      console.log("[executePython] Executing code:\n", fullCode);
+      console.log("[executePython] With setup input:", setupInput); // Log the input used for setup
+      // ---------------
+
+      // Configure I/O using 'batched' (reverting change)
+      window.pyodide.setStdout({ batched: (text: string) => stdout.push(text) });
+      window.pyodide.setStderr({ batched: (text: string) => stderr.push(text) });
+
+      // Execute the potentially combined code without the stdin option
+      await window.pyodide.runPythonAsync(fullCode);
+
+      // --- DEBUG LOG --- Print captured streams
+      console.log("[executePython] Raw stdout captured:", stdout);
+      console.log("[executePython] Raw stderr captured:", stderr);
+      // ---------------
+
+      return {
+        output: stdout.join('').trim(), // Trim trailing newline often added by print
+        error: stderr.length > 0 ? stderr.join('') : null,
+      };
+    } catch (err: any) {
+        // --- DEBUG LOG --- Print caught error
+        console.error("[executePython] Error caught during execution:", err);
+        // ---------------
+
+        // Capture execution errors (like syntax errors, runtime errors caught by Python)
+        // These might also appear in stderr, but this catches errors during execution itself.
+        stderr.push(String(err)); // Add execution error to stderr
+        return {
+            output: stdout.join('').trim(),
+            error: stderr.join(''),
+        };
+    }
+  };
+
+
+  // Execute code for the "Run Code" button
+  const runCode = async () => {
     setLoading(true);
     setOutput('');
     setError(null);
     setTestResults([]);
 
     try {
-      // Capture stdout and stderr
-      const stdout: string[] = [];
-      const stderr: string[] = [];
-
-      window.pyodide.setStdout({ write: (text: string) => stdout.push(text) });
-      window.pyodide.setStderr({ write: (text: string) => stderr.push(text) });
-
-      // Execute code
-      await window.pyodide.runPythonAsync(code);
-
-      const output = stdout.join('');
-      setOutput(output);
-
-      if (stderr.length > 0) {
-        setError(stderr.join(''));
+      const result = await executePython(code); // No input provided for general run
+      setOutput(result.output);
+      if (result.error) {
+        setError(result.error);
       }
 
-      // Run tests if there are test cases and auto-grading is enabled
+      // Remove the automatic triggering of runTests after runCode
+      /*
       if (autoGrade && testCases.length > 0) {
-        runTests();
+         await runTests(false); 
       }
+      */
+
     } catch (err: any) {
       setError(err.message || 'Error executing code');
     } finally {
@@ -131,72 +207,59 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
     }
   };
 
-  // Run test cases
-  const runTests = async () => {
+  // Run test cases for the "Run Tests" button or after "Run Code" if autoGrade=true
+  const runTests = async (isPrimaryAction: boolean = true) => {
+    if (isPrimaryAction) {
+        setLoading(true); // Only set loading if "Run Tests" button was clicked
+        setError(null);
+        setOutput(''); // Clear general output when running tests specifically
+    }
+    setTestResults([]); // Clear previous results
+
     if (!pyodideReady || !window.pyodide) {
       setError('Python environment is not ready yet. Please wait.');
+      if (isPrimaryAction) setLoading(false);
       return;
     }
 
     try {
-      const results = await Promise.all(
-        testCases.map(async (testCase) => {
-          const stdout: string[] = [];
-          window.pyodide.setStdout({ write: (text: string) => stdout.push(text) });
-
-          try {
-            // Set stdin if input exists
-            if (testCase.input) {
-              // Simplified input handling, actual implementation needs more complex logic
-              await window.pyodide.runPythonAsync(`
-                import sys
-                import io
-                sys.stdin = io.StringIO("""${testCase.input}""")
-              `);
-            }
-
-            // Execute code
-            await window.pyodide.runPythonAsync(code);
-            const output = stdout.join('').trim();
-            
+        const resultsPromises = testCases.map(async (testCase) => {
+            const result = await executePython(code, testCase.input);
+            const passed = !result.error && result.output.trim() === testCase.expectedOutput.trim();
             return {
-              passed: output === testCase.expectedOutput.trim(),
-              output,
+              passed: passed,
+              output: result.output,
               expectedOutput: testCase.expectedOutput,
               description: testCase.description,
+              error: result.error, // Include error output in the result object
             };
-          } catch (err: any) {
-            return {
-              passed: false,
-              output: err.message || 'Error executing test',
-              expectedOutput: testCase.expectedOutput,
-              description: testCase.description,
-            };
-          }
-        })
-      );
+        });
 
-      setTestResults(results);
+        const results = await Promise.all(resultsPromises);
+        setTestResults(results);
+
     } catch (err: any) {
       setError(err.message || 'Error running test cases');
+    } finally {
+       if (isPrimaryAction) setLoading(false);
     }
   };
 
   return (
     <div className={styles.executionContainer}>
       <div className={styles.controlPanel}>
-        <Button 
-          onClick={runCode} 
+        <Button
+          onClick={runCode}
           disabled={loading || !pyodideReady || pyodideLoading}
           className={styles.runButton}
         >
           {loading ? <Spinner className="mr-2" size="sm" /> : null}
           {loading ? 'Executing...' : 'Run Code'}
         </Button>
-        
+
         {autoGrade && testCases.length > 0 && (
-          <Button 
-            onClick={runTests} 
+          <Button
+            onClick={() => runTests(true)} // Ensure this passes true
             disabled={loading || !pyodideReady || pyodideLoading}
             variant="outline"
             className={styles.testButton}
@@ -213,7 +276,8 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
         </div>
       )}
 
-      {error && (
+      {/* Display general error (e.g., Pyodide loading error, test runner error) */}
+      {error && !testResults.length && ( // Only show general error if no test results are shown
         <Alert variant="destructive" className={styles.errorOutput}>
           <AlertDescription>
             <pre>{error}</pre>
@@ -221,12 +285,14 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
         </Alert>
       )}
 
-      {output && (
-        <div className={styles.outputContainer}>
-          <h3 className={styles.outputTitle}>Output:</h3>
-          <pre className={styles.output}>{output}</pre>
-        </div>
-      )}
+      {/* Display general output only if tests were not the primary action */}
+       {output && !testResults.length && ( // Only show general output if no test results are shown
+          <div className={styles.outputContainer}>
+            <h3 className={styles.outputTitle}>Output:</h3>
+            <pre className={styles.output}>{output}</pre>
+          </div>
+       )}
+
 
       {testResults.length > 0 && (
         <div className={styles.testResultsContainer}>
@@ -235,8 +301,8 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
           </h3>
           <div className={styles.testResultsList}>
             {testResults.map((result, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className={`${styles.testResult} ${result.passed ? styles.passed : styles.failed}`}
               >
                 <div className={styles.testHeader}>
@@ -247,19 +313,26 @@ const CodeExecution: React.FC<CodeExecutionProps> = ({
                     Test {index + 1}: {result.description}
                   </h4>
                 </div>
-                
-                {!result.passed && (
-                  <div className={styles.testDetails}>
-                    <div className={styles.testOutputRow}>
-                      <span className={styles.testLabel}>Expected Output:</span>
-                      <pre className={styles.testExpected}>{result.expectedOutput}</pre>
-                    </div>
-                    <div className={styles.testOutputRow}>
-                      <span className={styles.testLabel}>Actual Output:</span>
-                      <pre className={styles.testActual}>{result.output}</pre>
-                    </div>
+                <div className={styles.testDetails}>
+                  <div>
+                    <strong>Actual Output:</strong>
+                    <pre>{result.output !== '' ? result.output : '(No output)'}</pre>
                   </div>
-                )}
+                  {!result.passed && (
+                    <>
+                      <div>
+                        <strong>Expected Output:</strong>
+                        <pre>{result.expectedOutput}</pre>
+                      </div>
+                      {result.error && (
+                        <div>
+                          <strong>Error:</strong>
+                          <pre>{result.error}</pre>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>

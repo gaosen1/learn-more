@@ -157,10 +157,10 @@ model Exercise {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  // 与用户的关系
+  // Relationship with user
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // 与解决方案的关系
+  // Relationship with Solution
   solutions   Solution[]
 }
 

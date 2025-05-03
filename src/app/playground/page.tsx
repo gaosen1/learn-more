@@ -50,6 +50,7 @@ export default function PlaygroundPage() {
   const [code, setCode] = useState<string>(initialCode);
 
   const handleCodeChange = (value: string) => {
+    console.log("[PlaygroundPage] handleCodeChange called with value:", value);
     setCode(value);
   };
 

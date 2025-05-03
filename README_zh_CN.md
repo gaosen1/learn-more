@@ -49,5 +49,9 @@ POSTGRES_PRISMA_URL=postgres://neondb_owner:npg_kgw4Cn8SaATX@ep-square-water-a5y
     *   `/course/[id]/edit`: 编辑课程页 (仅课程作者 Educator 可访问)
     *   `/admin/subscriptions`: 订阅管理后台 (仅 Admin 可访问)
     *   `/login`, `/signup`: 登录与注册页
+    *   `/playground`: 编程练习场 (可以在浏览器中直接编写和运行 Python 代码，支持测试用例)
 
-- 
+- 已有的部分账号：
+  - 学生：账号：student@example.com，密码：Password123!
+  - 教育者：sarah.parker@example.com，密码：Password123!
+  - 管理员：admin@example.com，密码：Password123!
