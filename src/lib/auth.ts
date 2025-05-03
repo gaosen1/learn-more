@@ -94,6 +94,13 @@ export function isEducator(user: { role: UserRole } | null): boolean {
   return user?.role === 'EDUCATOR';
 }
 
+// --- Add isAdmin function --- 
+export function isAdmin(user: { role: UserRole } | null): boolean {
+  // Use type assertion temporarily until Prisma Client is generated
+  return user?.role === 'ADMIN' as UserRole;
+}
+// --- End isAdmin function ---
+
 // Clean user data by removing sensitive information
 export function sanitizeUser(user: User): Omit<User, 'password'> {
   const { password, ...userWithoutPassword } = user;

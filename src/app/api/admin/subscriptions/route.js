@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getUserFromRequest, isEducator } from '@/lib/auth';
+import { getUserFromRequest, isAdmin } from '@/lib/auth';
 
 // Get subscriptions with paging
 export async function GET(request) {
   try {
-    // Get current user and check if it's an educator (admin)
+    // Get current user and check if it's an ADMIN
     const currentUser = getUserFromRequest(request);
     
     if (!currentUser) {
@@ -15,9 +15,9 @@ export async function GET(request) {
       );
     }
     
-    if (!isEducator(currentUser)) {
+    if (!isAdmin(currentUser)) {
       return NextResponse.json(
-        { error: 'Access denied. Only educators can access admin features.' },
+        { error: 'Forbidden: Access restricted to administrators' },
         { status: 403 }
       );
     }
@@ -123,7 +123,7 @@ export async function GET(request) {
 // Create a new subscription
 export async function POST(request) {
   try {
-    // Get current user and check if it's an educator (admin)
+    // Get current user and check if it's an ADMIN
     const currentUser = getUserFromRequest(request);
     
     if (!currentUser) {
@@ -133,9 +133,9 @@ export async function POST(request) {
       );
     }
     
-    if (!isEducator(currentUser)) {
+    if (!isAdmin(currentUser)) {
       return NextResponse.json(
-        { error: 'Access denied. Only educators can access admin features.' },
+        { error: 'Forbidden: Only administrators can create subscriptions' },
         { status: 403 }
       );
     }

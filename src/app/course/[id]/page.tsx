@@ -12,6 +12,14 @@ import { getCurrentUser } from '@/utils/auth';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string;
+}
+
 interface Lesson {
   id: number;
   title: string;
@@ -48,9 +56,11 @@ export default function CoursePage() {
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const [showQRCode, setShowQRCode] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const currentUser = getCurrentUser();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
+    setCurrentUser(getCurrentUser());
+    
     const fetchCourseData = async () => {
       setIsLoading(true);
       setError(null);
@@ -99,35 +109,63 @@ export default function CoursePage() {
   };
 
   const markLessonComplete = async (index: number) => {
-    if (!course || !course.lessons[index]) return;
+    if (!course || !course.lessons[index] || !currentUser) return;
+    
     const lessonId = course.lessons[index].id;
     const courseId = course.id;
+    
+    if (course.lessons[index].completed) {
+        console.log(`Lesson ${lessonId} already marked as complete locally.`);
+        return; 
+    }
 
     console.log(`Marking lesson ${lessonId} for course ${courseId} as complete...`);
-    try {
-      console.warn("API call for marking lesson complete not implemented yet. Simulating success.");
-      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const updatedLessons = [...course.lessons];
-      updatedLessons[index] = { ...updatedLessons[index], completed: true };
-      
-      const newCompletedCount = updatedLessons.filter(l => l.completed).length;
-      const newProgress = course.lessons.length > 0 
-        ? Math.round((newCompletedCount / course.lessons.length) * 100) 
-        : 0;
-
-      setCourse(prevCourse => prevCourse ? {
+    const originalLessons = [...course.lessons];
+    const updatedLessonsOptimistic = [...originalLessons];
+    updatedLessonsOptimistic[index] = { ...updatedLessonsOptimistic[index], completed: true };
+    setCourse(prevCourse => prevCourse ? {
         ...prevCourse,
-        lessons: updatedLessons,
-        completedLessons: newCompletedCount,
-        progress: newProgress
-      } : null);
+        lessons: updatedLessonsOptimistic,
+    } : null);
 
-      console.log("Lesson marked complete locally.");
+    try {
+      const response = await api.post(`/courses/${courseId}/complete-lesson`, { lessonId });
+      
+      if (response.status === 200) {
+        const data = response.data;
+        console.log("Lesson mark complete API success:", data);
+
+        setCourse(prevCourse => {
+            if (!prevCourse) return null;
+            const lessonsWithCompletion = [...prevCourse.lessons]; 
+            if (lessonsWithCompletion[index]) {
+                lessonsWithCompletion[index] = { ...lessonsWithCompletion[index], completed: true };
+            }
+            return {
+                ...prevCourse,
+                lessons: lessonsWithCompletion,
+                progress: data.progress,
+                completedLessons: data.completedLessons
+            };
+        });
+        
+        toast({ title: "Success", description: data.message || "Lesson marked as complete!", type: "success" });
+
+      } else {
+         throw new Error(response.data?.error || `API responded with status ${response.status}`);
+      }
 
     } catch (err: any) {
-      console.error('Error marking lesson as complete:', err);
-      alert("Failed to mark lesson as complete. Please try again.");
+      console.error('Error marking lesson as complete via API:', err);
+      toast({ 
+          title: "Error", 
+          description: err.response?.data?.error || err.message || "Failed to save progress. Please try again.", 
+          type: "error" 
+      });
+
+      setCourse(prevCourse => prevCourse ? { ...prevCourse, lessons: originalLessons } : null);
+    } finally {
     }
   };
 

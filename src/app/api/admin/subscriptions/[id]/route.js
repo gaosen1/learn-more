@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getUserFromRequest, isEducator } from '@/lib/auth';
+import { getUserFromRequest, isAdmin } from '@/lib/auth';
 
 // Get a single subscription
 export async function GET(request, { params }) {
@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Get current user and check if it's an educator (admin)
+    // Get current user and check if it's an ADMIN
     const currentUser = getUserFromRequest(request);
     
     if (!currentUser) {
@@ -26,9 +26,9 @@ export async function GET(request, { params }) {
       );
     }
     
-    if (!isEducator(currentUser)) {
+    if (!isAdmin(currentUser)) {
       return NextResponse.json(
-        { error: 'Access denied. Only educators can access admin features.' },
+        { error: 'Forbidden: Access restricted to administrators' },
         { status: 403 }
       );
     }
@@ -80,7 +80,7 @@ export async function PUT(request, { params }) {
       );
     }
     
-    // Get current user and check if it's an educator (admin)
+    // Get current user and check if it's an ADMIN
     const currentUser = getUserFromRequest(request);
     
     if (!currentUser) {
@@ -90,9 +90,9 @@ export async function PUT(request, { params }) {
       );
     }
     
-    if (!isEducator(currentUser)) {
+    if (!isAdmin(currentUser)) {
       return NextResponse.json(
-        { error: 'Access denied. Only educators can access admin features.' },
+        { error: 'Forbidden: Only administrators can update subscriptions' },
         { status: 403 }
       );
     }
@@ -161,7 +161,7 @@ export async function DELETE(request, { params }) {
       );
     }
     
-    // Get current user and check if it's an educator (admin)
+    // Get current user and check if it's an ADMIN
     const currentUser = getUserFromRequest(request);
     
     if (!currentUser) {
@@ -171,9 +171,9 @@ export async function DELETE(request, { params }) {
       );
     }
     
-    if (!isEducator(currentUser)) {
+    if (!isAdmin(currentUser)) {
       return NextResponse.json(
-        { error: 'Access denied. Only educators can access admin features.' },
+        { error: 'Forbidden: Only administrators can archive subscriptions' },
         { status: 403 }
       );
     }

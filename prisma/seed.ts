@@ -81,6 +81,19 @@ async function main() {
     });
     console.log(`Created student: ${student.name} (ID: ${student.id})`);
 
+    // --- Create Admin User --- 
+    const adminUser = await prisma.user.create({
+      data: {
+        email: 'admin@example.com',
+        name: 'Platform Admin',
+        password: hashedPassword, // Use the same hashed password or a new one
+        role: 'ADMIN' as UserRole, // <-- Use type assertion temporarily
+        avatar: `https://ui-avatars.com/api/?name=Admin&background=grey`, // Custom avatar
+      },
+    });
+    console.log(`Created admin user: ${adminUser.name} (ID: ${adminUser.id})`);
+    // --- End Admin User Creation ---
+
     // Create sample subscription data
     console.log('Creating sample subscriptions...');
     

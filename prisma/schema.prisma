@@ -37,6 +37,7 @@ model User {
 enum UserRole {
   STUDENT
   EDUCATOR
+  ADMIN
 }
 
 // Subscription Plan Enum

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import MainLayout from "@/components/layout/MainLayout";
 import styles from "./page.module.css";
+import api from '@/utils/api';
+import { useToast } from '@/components/ui/toast';
 
 // 课程部分和课时的接口定义
 interface Lesson {
@@ -21,6 +23,7 @@ interface Section {
 
 export default function CreateCourse() {
   const router = useRouter();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     title: '',
@@ -44,43 +47,55 @@ export default function CreateCourse() {
   
   // 用户和权限状态
   const [userChecked, setUserChecked] = useState(false);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   // 检查用户权限
   useEffect(() => {
-    const checkUser = async () => {
+    let isMounted = true;
+    
+    const checkUserPermission = async () => {
+      setIsLoadingAuth(true);
       try {
-        // 检查用户是否已登录
-        const token = localStorage.getItem('token');
-        const userString = localStorage.getItem('user');
-        
-        if (!token || !userString) {
-          alert('请先登录再创建课程');
-          router.push('/login');
-          return;
-        }
-        
-        // 检查用户是否有权限创建课程
-        try {
-          const user = JSON.parse(userString);
-          if (user.role !== 'EDUCATOR') {
-            alert('只有教育者账户才能创建课程');
-            router.push('/dashboard');
-            return;
-          }
-          
-          // 用户有权限创建课程
+        console.log("Create Course: Checking user auth via /api/auth/me");
+        const response = await api.get('/auth/me');
+        const user = response.data.user;
+
+        if (!isMounted) return;
+
+        if (user && user.role === 'EDUCATOR') {
+          console.log("Create Course: User is Educator. Access granted.");
           setUserChecked(true);
-        } catch (error) {
-          console.error('解析用户信息失败:', error);
-          router.push('/login');
+        } else {
+          console.log("Create Course: User is not an Educator or not logged in.");
+          toast({ 
+              title: "Access Denied", 
+              description: "Only educators can create courses. Redirecting...", 
+              type: "error"
+          });
+          router.push('/dashboard');
         }
-      } catch (error) {
-        console.error('检查用户权限时出错:', error);
+
+      } catch (error: any) {
+        if (!isMounted) return;
+        console.error('Create Course: Error checking user permission:', error);
+        toast({ 
+            title: "Authentication Required", 
+            description: "Please log in as an educator to create a course. Redirecting...", 
+            type: "error"
+        });
+        router.push('/login?redirect=/create'); 
+      } finally {
+         if (isMounted) {
+            setIsLoadingAuth(false);
+         }
       }
     };
     
-    checkUser();
-  }, [router]);
+    checkUserPermission();
+    
+    return () => { isMounted = false; };
+
+  }, [router, toast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -248,162 +263,147 @@ export default function CreateCourse() {
     setNewLessonContent('');
   };
 
-  // 从localStorage中获取认证令牌
-  const getAuthToken = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('token');
-    }
-    return null;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleSubmit函数被调用');
+    console.log('handleSubmit function called');
     
-    // 身份验证检查
-    const token = getAuthToken();
-    if (!token) {
-      alert('您尚未登录或登录已过期，请先登录');
-      router.push('/login');
-      return;
-    }
-    
-    // 表单验证
+    // Form validation (remains the same)
     if (!formData.title || !formData.description || !formData.category) {
-      alert('请填写所有必填字段: 课程标题、描述和分类');
+      toast({ title: "Missing Fields", description: "Please fill in course title, description, and category.", type: "error" });
+      setCurrentStep(1); // Go back to step 1 if basic info is missing
       return;
     }
     
     if (sections.length === 0) {
-      alert('请至少添加一个课程章节');
-      return;
+       toast({ title: "No Sections", description: "Please add at least one section to the course.", type: "error" });
+       setCurrentStep(2); // Go to step 2
+       return;
     }
     
-    // 检查所有章节是否都有课时
-    let emptySections = sections.filter(section => section.lessons.length === 0);
+    // Check for empty sections (optional confirmation)
+    const emptySections = sections.filter(section => section.lessons.length === 0);
     if (emptySections.length > 0) {
-      if (!confirm(`以下章节没有课时: ${emptySections.map(s => s.title).join(', ')}. 是否继续创建课程?`)) {
+      if (!confirm(`The following sections have no lessons: ${emptySections.map(s => s.title).join(', ')}. Continue creating the course?`)) {
+        setCurrentStep(2); // Stay on step 2
         return;
       }
     }
     
+    // Add submitting state if needed
+    // setIsSubmitting(true); 
+
     try {
-      // 构建完整的课程数据
+      // Build course data (ensure default image URL if none provided)
       const courseData = {
         ...formData,
-        imageUrl: formData.imageUrl || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97' // 使用默认图片URL
+        imageUrl: formData.imageUrl || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97' 
       };
       
-      console.log('准备创建课程，数据:', courseData);
+      console.log('Preparing to create course with data:', courseData);
       
-      // 创建新课程
-      const courseResponse = await fetch('/api/courses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(courseData),
-      });
+      // --- Create the new course using api instance --- 
+      const courseResponse = await api.post('/courses', courseData);
+      // Note: api instance should automatically handle headers/cookies
       
-      console.log('课程API响应状态:', courseResponse.status);
+      console.log('Course creation API response status:', courseResponse.status);
+      // Assuming api instance throws error on non-2xx status
       
-      if (!courseResponse.ok) {
-        const errorData = await courseResponse.json();
-        console.error('课程创建失败:', errorData);
-        throw new Error(errorData.error || 'Failed to create course');
-      }
+      const courseResult = courseResponse.data; // Assuming data is in response.data
+      console.log('Course created successfully:', courseResult);
       
-      const courseResult = await courseResponse.json();
-      console.log('课程创建成功:', courseResult);
+      let hasErrorInSectionOrLesson = false;
+      let createdSections = 0;
+      let createdLessons = 0;
       
-      let hasError = false;
-      
-      // 创建课程章节和课时
+      // --- Create sections and lessons --- 
       for (const section of sections) {
         try {
-          console.log('创建章节:', section.title);
-          // 创建章节
-          const sectionResponse = await fetch(`/api/courses/${courseResult.id}/sections`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ title: section.title }),
-          });
+          console.log('Creating section:', section.title);
+          // Use api instance for creating section
+          const sectionResponse = await api.post(
+              `/courses/${courseResult.id}/sections`,
+              { title: section.title, order: sections.indexOf(section) + 1 } // Pass order explicitly
+          );
           
-          console.log('章节API响应状态:', sectionResponse.status);
+          console.log('Section creation API response status:', sectionResponse.status);
+          const sectionResult = sectionResponse.data;
+          console.log('Section created successfully:', sectionResult);
+          createdSections++;
           
-          if (!sectionResponse.ok) {
-            console.error('创建章节失败:', section.title);
-            hasError = true;
-            continue;
-          }
-          
-          const sectionResult = await sectionResponse.json();
-          console.log('章节创建成功:', sectionResult);
-          
-          // 为每个章节创建课时
+          // Create lessons for this section
           for (const lesson of section.lessons) {
             try {
-              console.log('创建课时:', lesson.title);
-              // 直接使用POST请求创建课时
-              const lessonResponse = await fetch(`/api/courses/${courseResult.id}/lessons`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                  title: lesson.title,
-                  content: lesson.content,
-                  order: lesson.order,
-                  sectionId: sectionResult.id
-                }),
-              });
+              console.log('Creating lesson:', lesson.title, 'for section:', sectionResult.id);
+              // Use api instance for creating lesson
+              const lessonResponse = await api.post(
+                  // Ensure using correct endpoint (could be /courses/[id]/lessons or /courses/[id]/sections/[sid]/lessons)
+                  // Using /courses/[id]/lessons as per previous check:
+                  `/courses/${courseResult.id}/lessons`, 
+                  {
+                    title: lesson.title,
+                    content: lesson.content,
+                    order: lesson.order, // Use order from state
+                    sectionId: sectionResult.id // Use the ID of the just-created section
+                  }
+              );
               
-              console.log('课时API响应状态:', lessonResponse.status);
+              console.log('Lesson creation API response status:', lessonResponse.status);
+              const lessonResult = lessonResponse.data;
+              console.log('Lesson created successfully:', lessonResult);
+              createdLessons++;
               
-              if (!lessonResponse.ok) {
-                const lessonError = await lessonResponse.json();
-                console.error('创建课时失败:', lesson.title, lessonError);
-                hasError = true;
-              } else {
-                const lessonResult = await lessonResponse.json();
-                console.log('课时创建成功:', lessonResult);
-              }
             } catch (lessonError: any) {
-              console.error('处理课时时出错:', lesson.title, lessonError.message);
-              hasError = true;
+              console.error('Error creating lesson:', lesson.title, lessonError.response?.data || lessonError.message);
+              hasErrorInSectionOrLesson = true;
+              // Optionally break or continue depending on desired behavior
             }
           }
         } catch (sectionError: any) {
-          console.error('处理章节时出错:', sectionError.message);
-          hasError = true;
+          console.error('Error creating section:', section.title, sectionError.response?.data || sectionError.message);
+          hasErrorInSectionOrLesson = true;
+          // Optionally break or continue
         }
       }
       
-      console.log('课程、章节和课时创建完成，准备跳转到仪表板');
+      console.log('Course, sections, and lessons creation process finished.');
+      console.log(`Summary: ${createdSections} sections, ${createdLessons} lessons attempted.`);
       
-      if (hasError) {
-        alert('课程已创建，但部分章节或课时创建失败。您可以稍后在编辑页面中添加它们。');
+      if (hasErrorInSectionOrLesson) {
+         toast({ 
+            title: "Course Created (with issues)", 
+            description: "Course info saved, but some sections/lessons failed. Please check and edit the course.", 
+            type: "warning"
+         });
+      } else {
+         toast({ title: "Success!", description: "Course created successfully!", type: "success" });
       }
       
-      // 成功创建课程后重定向到仪表板
-      router.push('/dashboard');
+      // Redirect to the newly created course page or dashboard
+      // router.push(`/course/${courseResult.id}`); // Option 1: Go to course page
+      router.push('/dashboard'); // Option 2: Go to dashboard
+
     } catch (error: any) {
-      console.error('创建课程过程中出错:', error);
-      // 这里可以添加错误处理逻辑，例如显示错误消息
-      alert(`创建课程失败: ${error.message}`);
+      console.error('Error during course creation process:', error);
+      toast({ 
+          title: "Course Creation Failed", 
+          description: error.response?.data?.error || error.message || "An unexpected error occurred.", 
+          type: "error"
+      });
+    } finally {
+       // Reset submitting state if used
+       // setIsSubmitting(false);
     }
   };
 
   return (
     <MainLayout>
-      {!userChecked ? (
+      {isLoadingAuth ? (
         <div className={styles.loading}>
-          <p>正在验证您的权限...</p>
+          <p>Verifying permissions...</p>
+        </div>
+      ) : !userChecked ? (
+        <div className={styles.loading}>
+          <p>Permission check failed or redirecting...</p>
         </div>
       ) : (
         <div className={styles.createCourse}>
@@ -511,13 +511,11 @@ export default function CreateCourse() {
                       In this step, you can add course sections and lesson content.
                     </p>
                     
-                    {/* 课程部分列表 */}
                     {sections.length > 0 ? (
                       <div className={styles.sectionsList}>
                         {sections.map((section) => (
                           <div key={section.id} className={styles.sectionItem}>
                             <div className={styles.sectionHeader}>
-                              {/* 编辑课程部分 */}
                               {editingSectionId === section.id ? (
                                 <div className={styles.sectionEditForm}>
                                   <input
@@ -570,7 +568,6 @@ export default function CreateCourse() {
                               )}
                             </div>
                             
-                            {/* 课时列表 */}
                             <div className={styles.lessonsList}>
                               {section.lessons.map((lesson) => (
                                 <div key={lesson.id} className={styles.lessonItem}>
@@ -597,7 +594,6 @@ export default function CreateCourse() {
                                 </div>
                               ))}
                               
-                              {/* 添加课时表单 */}
                               {editingSectionForLesson === section.id && editingLessonId === null && (
                                 <div className={styles.lessonForm}>
                                   <h5 className={styles.lessonFormTitle}>Add New Lesson</h5>
@@ -640,7 +636,6 @@ export default function CreateCourse() {
                                 </div>
                               )}
                               
-                              {/* 编辑课时表单 */}
                               {editingSectionForLesson === section.id && editingLessonId !== null && (
                                 <div className={styles.lessonForm}>
                                   <h5 className={styles.lessonFormTitle}>Edit Lesson</h5>
@@ -683,7 +678,6 @@ export default function CreateCourse() {
                                 </div>
                               )}
                               
-                              {/* 添加新课时按钮 */}
                               {editingSectionForLesson !== section.id && (
                                 <button 
                                   type="button" 
@@ -699,7 +693,6 @@ export default function CreateCourse() {
                       </div>
                     ) : null}
                     
-                    {/* 添加课程部分表单 */}
                     {showSectionForm ? (
                       <div className={styles.sectionForm}>
                         <div className={styles.formGroup}>

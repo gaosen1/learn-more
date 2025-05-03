@@ -60,7 +60,15 @@ export async function GET(request: NextRequest) {
           course: { // Include the actual course data
             include: {
               author: { select: { id: true, name: true, avatar: true } },
-              _count: { select: { lessons: true } } // Need total lessons count
+              // _count: { select: { lessons: true } } // Remove direct count on Course.lessons
+              // Instead, include sections and count lessons within them
+              sections: {
+                select: {
+                  _count: {
+                    select: { lessons: true }
+                  }
+                }
+              }
             }
           }
         },
@@ -70,21 +78,30 @@ export async function GET(request: NextRequest) {
       });
       
       // Format the enrolled courses data, including progress
-      const formattedCourses = enrollments.map(enrollment => ({
-         id: enrollment.course.id,
-         title: enrollment.course.title,
-         description: enrollment.course.description, // Maybe shorten this too?
-         imageUrl: enrollment.course.imageUrl,
-         category: enrollment.course.category,
-         isPublic: enrollment.course.isPublic, // Might be useful to know
-         author: enrollment.course.author.name,
-         createdAt: enrollment.course.createdAt.toISOString(),
-         lessonsCount: enrollment.course._count?.lessons ?? 0,
-         // Add progress info from the enrollment record
-         progress: enrollment.progress,
-         completedLessons: enrollment.completedLessons,
-         enrolledAt: enrollment.enrolledAt.toISOString()
-       }));
+      const formattedCourses = enrollments.map(enrollment => {
+         // Calculate total lessons by summing counts from each section
+         const totalLessonsCount = enrollment.course.sections.reduce(
+             (sum, section) => sum + (section._count?.lessons ?? 0),
+             0
+         );
+         
+         return {
+             id: enrollment.course.id,
+             title: enrollment.course.title,
+             description: enrollment.course.description, // Maybe shorten this too?
+             imageUrl: enrollment.course.imageUrl,
+             category: enrollment.course.category,
+             isPublic: enrollment.course.isPublic, // Might be useful to know
+             author: enrollment.course.author.name,
+             createdAt: enrollment.course.createdAt.toISOString(),
+             // lessonsCount: enrollment.course._count?.lessons ?? 0, // Use the calculated count
+             lessonsCount: totalLessonsCount, 
+             // Add progress info from the enrollment record
+             progress: enrollment.progress,
+             completedLessons: enrollment.completedLessons,
+             enrolledAt: enrollment.enrolledAt.toISOString()
+         };
+       });
       
       return NextResponse.json(formattedCourses);
       

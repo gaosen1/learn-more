@@ -5,9 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
 import styles from './page.module.css';
+import api from '@/utils/api';
+import { getCurrentUser } from '@/utils/auth';
+import { useToast } from '@/components/ui/toast';
 
 export default function SubscriptionsAdminPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [subscriptions, setSubscriptions] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -16,6 +20,7 @@ export default function SubscriptionsAdminPage() {
     totalPages: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     status: '',
@@ -26,13 +31,54 @@ export default function SubscriptionsAdminPage() {
 
   // Load subscriptions on page load or when filters/pagination change
   useEffect(() => {
-    fetchSubscriptions();
-  }, [pagination.currentPage, pagination.pageSize, filters]);
+    const checkAuthAndFetchData = async () => {
+       setLoading(true);
+       setIsAuthorized(false);
+       setError(null);
+       
+       const currentUser = getCurrentUser();
+       if (currentUser && currentUser.role === 'ADMIN') {
+          console.log("Admin Subscriptions: User is ADMIN (from localStorage)");
+          setIsAuthorized(true);
+          await fetchSubscriptions();
+       } else {
+          try {
+             console.log("Admin Subscriptions: Checking auth via /api/auth/me");
+             const response = await api.get('/auth/me');
+             const user = response.data.user;
+             if (user && user.role === 'ADMIN') {
+                console.log("Admin Subscriptions: User is ADMIN (from API)");
+                setIsAuthorized(true);
+                await fetchSubscriptions();
+             } else {
+                 console.log("Admin Subscriptions: User is not ADMIN or not logged in.");
+                 toast({ title: "Access Denied", description: "You do not have permission to view this page.", type: "error" });
+                 router.push('/dashboard');
+             }
+          } catch (authError) {
+             console.error("Admin Subscriptions: Auth check failed", authError);
+             toast({ title: "Authentication Error", description: "Please log in as an administrator.", type: "error" });
+             router.push('/login?redirect=/admin/subscriptions');
+          }
+       }
+       setLoading(false);
+    };
+
+    checkAuthAndFetchData();
+  }, []);
+
+  // Separate useEffect for fetching when filters/pagination change, *only if authorized*
+  useEffect(() => {
+      if (isAuthorized) {
+          fetchSubscriptions();
+      }
+  }, [isAuthorized, pagination.currentPage, pagination.pageSize, filters]);
 
   // Fetch subscriptions from API
   const fetchSubscriptions = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Build query parameters
       const queryParams = new URLSearchParams({
@@ -53,30 +99,24 @@ export default function SubscriptionsAdminPage() {
         queryParams.append('search', filters.search);
       }
       
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
+      // Make API request using api instance
+      const response = await api.get(`/admin/subscriptions?${queryParams.toString()}`);
       
-      // Make API request with auth header
-      const response = await fetch(`/api/admin/subscriptions?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch subscriptions');
-      }
-      
-      const data = await response.json();
+      const data = response.data;
       
       // Update state with response data
       setSubscriptions(data.subscriptions);
       setPagination(data.pagination);
       
     } catch (err) {
-      setError(err.message);
       console.error('Error fetching subscriptions:', err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+         setError("Unauthorized. You might need to log in as an admin.");
+      } else {
+         setError(err.response?.data?.error || err.message || 'Failed to fetch subscriptions');
+      }
+      setSubscriptions([]);
+      setPagination({ currentPage: 1, pageSize: 10, totalCount: 0, totalPages: 0 });
     } finally {
       setLoading(false);
     }
@@ -121,27 +161,19 @@ export default function SubscriptionsAdminPage() {
     }
     
     try {
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
+      setError(null);
       
-      const response = await fetch(`/api/admin/subscriptions/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Use api instance for DELETE request
+      const response = await api.delete(`/admin/subscriptions/${id}`);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to archive subscription');
-      }
+      console.log("Archive response:", response);
       
       // Refresh subscriptions list
       fetchSubscriptions();
       
     } catch (err) {
-      setError(err.message);
       console.error('Error archiving subscription:', err);
+      setError(err.response?.data?.error || err.message || 'Failed to archive subscription');
     }
   };
 
@@ -166,6 +198,29 @@ export default function SubscriptionsAdminPage() {
         return '';
     }
   };
+
+  if (loading && !isAuthorized) {
+     return (
+       <MainLayout>
+         <div className={styles.loadingContainer}>
+           <div className={styles.spinner}></div>
+           <p>Verifying access...</p>
+         </div>
+       </MainLayout>
+     );
+  }
+  
+  if (!isAuthorized) {
+      return (
+          <MainLayout>
+             <div className="container text-center py-10">
+                <h2 className="text-xl text-red-600">Access Denied</h2>
+                <p className="text-gray-600">You do not have permission to view this page.</p>
+                <Link href="/dashboard"><button className="mt-4 btn btn-primary">Go to Dashboard</button></Link>
+             </div>
+          </MainLayout>
+      );
+  }
 
   return (
     <MainLayout>
