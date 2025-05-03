@@ -88,7 +88,7 @@ async function main() {
         name: 'Platform Admin',
         password: hashedPassword, // Use the same hashed password or a new one
         role: 'ADMIN' as UserRole, // <-- Use type assertion temporarily
-        avatar: `https://ui-avatars.com/api/?name=Admin&background=grey`, // Custom avatar
+        avatar: `https://ui-avatars.com/api/?name=Ad&background=grey`, // Custom avatar
       },
     });
     console.log(`Created admin user: ${adminUser.name} (ID: ${adminUser.id})`);

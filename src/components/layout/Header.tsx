@@ -59,32 +59,35 @@ export default function Header() {
   // Add localStorage change listener to refresh auth state
   useEffect(() => {
     const checkAuthChanges = () => {
-      // Check if token exists in localStorage
-      const token = localStorage.getItem('token');
+      // Check only if user exists in localStorage
+      // const token = localStorage.getItem('token'); // REMOVED: Don't rely on token in localStorage
       const userStr = localStorage.getItem('user');
       
-      if (token && userStr && !isAuthenticated && !isLoading) {
-        console.log('Auth data detected in localStorage but not in context. Refreshing auth state...');
-        console.log(`Token exists: ${!!token}, User exists: ${!!userStr}, isAuthenticated: ${isAuthenticated}`);
+      // If user string exists, context is not authenticated, and context is not loading
+      if (userStr && !isAuthenticated && !isLoading) {
+        console.log('User data detected in localStorage but not in context. Attempting to refresh auth state...');
         
         try {
-          // Validate that user is valid JSON
           const user = JSON.parse(userStr);
+          // Check if parsed user looks valid (has an ID)
           if (user && user.id) {
-            // If refreshAuth is available, call it to update auth state
             if (typeof refreshAuth === 'function') {
-              console.log('Calling refreshAuth()...');
-              refreshAuth();
+              console.log('Calling refreshAuth() to sync context with localStorage...');
+              refreshAuth(); // Try refreshing context from localStorage data
             } else {
-              console.log('refreshAuth not available, falling back to page reload');
-              // Fallback - reload the page to refresh auth state
-              window.location.reload();
+              console.log('refreshAuth not available, cannot sync context.');
+              // Consider reloading as a last resort if refreshAuth isn't guaranteed
+              // window.location.reload();
             }
           } else {
-            console.log('User data exists but appears invalid:', user);
+            console.log('User data in localStorage appears invalid:', user);
+            // Optionally clear invalid data
+            // localStorage.removeItem('user');
           }
         } catch (e) {
           console.error('Failed to parse user data from localStorage:', e);
+          // Optionally clear invalid data
+          // localStorage.removeItem('user');
         }
       }
     };
@@ -113,13 +116,12 @@ export default function Header() {
     
     window.addEventListener('storage', handleStorageChange);
     
-    // Also check periodically for direct localStorage modifications
     // which don't trigger the storage event in the same tab
-    const interval = setInterval(checkAuthChanges, 2000);
+    // const interval = setInterval(checkAuthChanges, 2000); // REMOVED: Interval check might be excessive
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
+      // clearInterval(interval); // REMOVED
     };
   }, [isAuthenticated, isLoading, refreshAuth]);
 
@@ -247,7 +249,7 @@ export default function Header() {
                   >
                     Dashboard
                   </Link>
-                  {user?.role === 'EDUCATOR' && (
+                  {(user?.role === 'ADMIN') && (
                     <Link
                       href="/admin/subscriptions"
                       className={styles.userDropdownLink}
@@ -370,7 +372,7 @@ export default function Header() {
                   >
                     Profile
                   </Link>
-                  {user?.role === 'EDUCATOR' && (
+                  {(user?.role === 'ADMIN') && (
                     <Link
                       href="/admin/subscriptions"
                       className={styles.mobileNavLink}
