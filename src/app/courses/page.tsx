@@ -52,7 +52,7 @@ export default function CoursesPage() {
             id: course.id,
             title: course.title ?? 'Untitled Course',
             description: course.description ?? '',
-            imageUrl: course.imageUrl ?? '/images/placeholder.png',
+            imageUrl: course.imageUrl ?? '/placeholder.png',
             category: course.category ?? 'Uncategorized',
             author: course.author ?? 'Unknown Author',
             createdAt: course.createdAt,
@@ -134,7 +134,7 @@ export default function CoursesPage() {
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.onerror = null;
-                        target.src = '/images/placeholder.png';
+                        target.src = '/placeholder.png';
                       }}
                     />
                     <div className={styles.category}>{course.category}</div>

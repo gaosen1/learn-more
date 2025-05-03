@@ -1,5 +1,29 @@
 .courseEditPage {
-  padding: 2rem 0;
+  padding: 2rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .courseEditPage {
+    padding: 2rem 2rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .courseEditPage {
+    padding: 2rem 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .courseEditPage {
+    padding: 2rem 6rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .courseEditPage {
+    padding: 2rem 10rem;
+  }
 }
 
 .header {
@@ -20,48 +44,111 @@
   gap: 1rem;
 }
 
-.primaryButton, .secondaryButton, .button, .addLessonButton, .actionButton, .deleteButton, .dangerButton, .downloadButton, .copyLinkButton {
-  padding: 0.5rem 1rem;
+.button, .buttonPrimary, .buttonSecondary, .buttonDanger,
+.primaryButton, .secondaryButton, .dangerButton,
+.addLessonButton, .actionButton, .deleteButton, .downloadButton, .copyLinkButton {
+  padding: 0.6rem 1.2rem;
   border-radius: 0.375rem;
-  font-size: 0.875rem;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.primaryButton {
+.button:hover, .buttonPrimary:hover, .buttonSecondary:hover, .buttonDanger:hover,
+.primaryButton:hover, .secondaryButton:hover, .dangerButton:hover,
+.addLessonButton:hover, .actionButton:hover, .deleteButton:hover, .downloadButton:hover, .copyLinkButton:hover {
+  text-decoration: none;
+}
+
+.buttonPrimary, .primaryButton {
   background-color: var(--primary-600);
-  color: white;
-  border: none;
+  color: white !important;
+  border-color: var(--primary-600);
 }
 
-.primaryButton:hover {
+.buttonPrimary:hover, .primaryButton:hover {
   background-color: var(--primary-700);
+  border-color: var(--primary-700);
 }
 
-.primaryButton:disabled {
+.buttonPrimary:disabled, .primaryButton:disabled {
   background-color: var(--gray-300);
+  border-color: var(--gray-300);
   cursor: not-allowed;
 }
 
-.secondaryButton {
+.buttonSecondary, .secondaryButton {
   background-color: white;
-  color: var(--gray-700);
-  border: 1px solid var(--gray-300);
+  color: var(--gray-700) !important;
+  border-color: var(--gray-300);
 }
 
-.secondaryButton:hover {
+.buttonSecondary:hover, .secondaryButton:hover {
   background-color: var(--gray-50);
+  border-color: var(--gray-400);
 }
 
-.button {
-  background-color: var(--primary-600);
-  color: white;
-  border: none;
+.buttonDanger, .dangerButton {
+  background-color: var(--error-600);
+  color: white !important;
+  border-color: var(--error-600);
 }
 
-.button:hover {
-  background-color: var(--primary-700);
+.buttonDanger:hover, .dangerButton:hover {
+  background-color: var(--error-700);
+  border-color: var(--error-700);
+}
+
+.buttonDanger:disabled, .dangerButton:disabled {
+  background-color: var(--error-300);
+  border-color: var(--error-300);
+  cursor: not-allowed;
+}
+
+.downloadButton {
+  /* Already uses .buttonPrimary styles effectively */
+}
+
+.copyLinkButton {
+  /* Uses .buttonSecondary styles effectively */
+}
+
+.actionButton {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  background-color: var(--gray-100);
+  color: var(--gray-700) !important;
+  border-color: var(--gray-200);
+}
+
+.actionButton:hover {
+  background-color: var(--gray-200);
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  background-color: var(--error-50);
+  color: var(--error-600) !important;
+  border-color: var(--error-200);
+}
+
+.deleteButton:hover {
+  background-color: var(--error-100);
+  border-color: var(--error-300);
 }
 
 .saveMessage {
@@ -111,7 +198,7 @@
 }
 
 .formContainer {
-  max-width: 1000px;
+  /* Remove max-width, let the outer 'container' control width */
 }
 
 .formField {
@@ -228,29 +315,6 @@
   flex-wrap: wrap;
 }
 
-.downloadButton {
-  background-color: var(--primary-600);
-  color: white;
-  border: none;
-  padding: 0.625rem 1.25rem;
-}
-
-.downloadButton:hover {
-  background-color: var(--primary-700);
-}
-
-.copyLinkButton {
-  background-color: white;
-  color: var(--gray-700);
-  border: 1px solid var(--gray-300);
-  padding: 0.625rem 1.25rem;
-}
-
-.copyLinkButton:hover {
-  background-color: var(--gray-50);
-  border-color: var(--gray-400);
-}
-
 .shareInstructions {
   background-color: var(--gray-50);
   padding: 1.5rem;
@@ -355,86 +419,6 @@
 .lessonActions {
   display: flex;
   gap: 0.375rem;
-}
-
-.actionButton {
-  padding: 0.25rem 0.5rem;
-  background-color: var(--gray-100);
-  color: var(--gray-700);
-  border: 1px solid var(--gray-200);
-}
-
-.actionButton:hover {
-  background-color: var(--gray-200);
-}
-
-.actionButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.deleteButton {
-  padding: 0.25rem 0.5rem;
-  background-color: var(--error-50);
-  color: var(--error-600);
-  border: 1px solid var(--error-200);
-}
-
-.deleteButton:hover {
-  background-color: var(--error-100);
-  border-color: var(--error-300);
-}
-
-.lessonContent {
-  width: 100%;
-}
-
-.lessonContentInput {
-  width: 100%;
-  resize: vertical;
-}
-
-.dangerZone {
-  margin-top: 3rem;
-  border: 1px solid var(--error-300);
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  background-color: var(--error-50);
-}
-
-.dangerZone h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--error-700);
-  margin-bottom: 1rem;
-}
-
-.dangerAction {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.dangerAction h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--gray-900);
-}
-
-.dangerAction p {
-  font-size: 0.875rem;
-  color: var(--gray-600);
-  margin-top: 0.25rem;
-}
-
-.dangerButton {
-  background-color: var(--error-600);
-  color: white;
-  border: none;
-}
-
-.dangerButton:hover {
-  background-color: var(--error-700);
 }
 
 .loadingContainer {
