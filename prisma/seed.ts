@@ -349,7 +349,7 @@ async function main() {
       // Create a default section for the course
       const defaultSection = await prisma.section.create({
           data: {
-              title: 'Course Content', // Default section title
+              title: 'Section 1', // Default section title
               order: 1,
               courseId: course.id,
           }
@@ -423,7 +423,7 @@ async function main() {
           authorId: sarahParkerId, // Assign Sarah as author
           sections: { // Create default section and lessons
             create: {
-              title: 'Course Content',
+              title: 'Section Content',
               order: 1,
               lessons: {
                 create: courseData.lessons.map(lesson => ({

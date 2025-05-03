@@ -80,8 +80,8 @@ export async function GET(request, { params }) {
     
     // --- Format response data --- 
     // Flatten lessons from sections into a single array
-    const allLessons = course.sections.flatMap(section => 
-        section.lessons.map(lesson => ({
+    const allLessons = course.sections.flatMap((section, sectionIndex) => 
+        section.lessons.map((lesson, lessonIndex) => ({
             id: lesson.id,
             title: lesson.title,
             content: lesson.content, // Consider omitting content in list view if large
@@ -90,11 +90,11 @@ export async function GET(request, { params }) {
             // Calculate completion status based on userEnrollment
             completed: userEnrollment 
               ? JSON.parse(userEnrollment.completedLessonIds || '[]').includes(lesson.id)
-              : false
+              : false,
+            // Add flatIndex if needed for easier frontend handling with currentLessonIndex
+            // flatIndex: course.sections.slice(0, sectionIndex).reduce((sum, s) => sum + s.lessons.length, 0) + lessonIndex 
         }))
     );
-    // Re-sort the flattened list just in case (optional, depends on flatMap behavior guarantee)
-    // allLessons.sort((a, b) => a.order - b.order); // Might need section order too if mixing
 
     const formattedCourse = {
       id: course.id,
@@ -108,15 +108,30 @@ export async function GET(request, { params }) {
       authorAvatar: course.author.avatar,
       createdAt: course.createdAt.toISOString(),
       updatedAt: course.updatedAt.toISOString(),
-      // Use the flattened and formatted lessons array
+      // Use the flattened and formatted lessons array (keep for compatibility?)
       lessons: allLessons, 
+      // Add the nested sections structure
+      sections: course.sections.map(section => ({
+          id: section.id,
+          title: section.title,
+          order: section.order,
+          // Map lessons within sections, ensuring completion status is included
+          lessons: section.lessons.map(lesson => ({
+              id: lesson.id,
+              title: lesson.title,
+              // Avoid sending full content in the nested structure unless needed
+              // content: lesson.content, 
+              order: lesson.order,
+              completed: userEnrollment
+                ? JSON.parse(userEnrollment.completedLessonIds || '[]').includes(lesson.id)
+                : false
+          }))
+      })),
       // Use progress/completion data from the fetched enrollment record
       progress: userEnrollment ? userEnrollment.progress : 0,
       completedLessons: userEnrollment ? userEnrollment.completedLessons : 0,
       isEnrolled: !!userEnrollment,
       isAuthor
-      // Include sections if the frontend needs the structure (optional)
-      // sections: course.sections // Could return the nested structure too
     };
     
     return NextResponse.json(formattedCourse);

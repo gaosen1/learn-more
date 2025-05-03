@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/components/UserAuthProvider';
 import MainLayout from '@/components/layout/MainLayout';
 import Link from 'next/link';
 import styles from './page.module.css';
-import axios from 'axios';
+import api from '@/utils/api';
 
 interface Course {
   id: number;
@@ -26,45 +26,50 @@ export default function EducatorPortal() {
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchCourses = useCallback(async () => {
+    setIsLoadingCourses(true);
+    setError(null);
+    try {
+      const response = await api.get<Course[]>('/courses?context=educator');
+      setCourses(response.data);
+    } catch (err) {
+      console.error('Error fetching courses:', err);
+      setError('Failed to load courses. Please try again later.');
+    } finally {
+      setIsLoadingCourses(false);
+    }
+  }, []);
+
   useEffect(() => {
-    // Redirect if user is not authenticated or not an educator
     if (!isLoading && (!isAuthenticated || user?.role !== 'EDUCATOR')) {
       router.push('/');
       return;
     }
-
-    // Fetch educator courses from API
-    const fetchCourses = async () => {
-      setIsLoadingCourses(true);
-      setError(null);
-      try {
-        // Use NEXT_PUBLIC_API_URL environment variable
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        if (!apiUrl) {
-          console.error('Error: NEXT_PUBLIC_API_URL environment variable is not set.');
-          setError('API URL configuration error.');
-          setIsLoadingCourses(false);
-          return;
-        }
-        
-        // Fetch courses specifically for the educator context
-        const response = await axios.get<Course[]>(`${apiUrl}/courses?context=educator`);
-        
-        // Assuming the API returns data in the format matching the updated Course interface
-        setCourses(response.data);
-
-      } catch (err) {
-        console.error('Error fetching courses:', err);
-        setError('Failed to load courses. Please try again later.');
-      } finally {
-        setIsLoadingCourses(false);
-      }
-    };
-
     if (isAuthenticated && user?.role === 'EDUCATOR') {
       fetchCourses();
     }
-  }, [isAuthenticated, isLoading, router, user]);
+  }, [isAuthenticated, isLoading, router, user, fetchCourses]);
+
+  const handleTogglePublishStatus = async (courseId: number, currentStatus: 'published' | 'draft') => {
+    const originalCourses = [...courses];
+    const newStatus = currentStatus === 'published' ? 'draft' : 'published';
+    const endpoint = currentStatus === 'published' ? `/courses/${courseId}/unpublish` : `/courses/${courseId}/publish`;
+
+    setCourses(prevCourses => 
+      prevCourses.map(course => 
+        course.id === courseId ? { ...course, status: newStatus } : course
+      )
+    );
+
+    try {
+      await api.post(endpoint);
+      console.log(`Course ${courseId} status changed to ${newStatus}`);
+    } catch (err) {
+      console.error(`Failed to ${newStatus === 'published' ? 'publish' : 'unpublish'} course:`, err);
+      setError(`Failed to update course status. Please try again.`);
+      setCourses(originalCourses);
+    }
+  };
 
   if (isLoading || isLoadingCourses) {
     return (
@@ -164,6 +169,12 @@ export default function EducatorPortal() {
                       <Link href={`/course/${course.id}/analytics`} className={styles.actionButton}>
                         Analytics
                       </Link>
+                      <button 
+                        onClick={() => handleTogglePublishStatus(course.id, course.status)}
+                        className={`${styles.actionButton} ${course.status === 'published' ? styles.unpublishButton : styles.publishButton}`}
+                      >
+                        {course.status === 'published' ? 'Unpublish' : 'Publish'}
+                      </button>
                     </div>
                   </div>
                 </div>

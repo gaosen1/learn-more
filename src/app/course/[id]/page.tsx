@@ -25,6 +25,15 @@ interface Lesson {
   title: string;
   content?: string;
   completed?: boolean;
+  order?: number;
+  sectionId?: number;
+}
+
+interface Section {
+  id: number;
+  title: string;
+  order: number;
+  lessons: Lesson[];
 }
 
 interface Course {
@@ -34,6 +43,7 @@ interface Course {
   imageUrl: string;
   progress: number;
   lessons: Lesson[];
+  sections: Section[];
   completedLessons: number;
   category: string;
   author: string;
@@ -365,23 +375,39 @@ export default function CoursePage() {
           {(course.isEnrolled || course.isPublic || course.isAuthor) && (
             <div className={styles.courseContent}>
               <div className={styles.lessonList}>
-                <h2 className={styles.lessonListTitle}>Course Lessons</h2>
-                <div className={styles.lessons}>
-                  {course.lessons.map((lesson, index) => (
-                    <div 
-                      key={lesson.id}
-                      className={`${styles.lessonItem} ${index === currentLessonIndex ? styles.active : ''} ${lesson.completed ? styles.completed : ''}`}
-                      onClick={() => handleLessonClick(index)}
-                    >
-                      <div className={styles.lessonNumber}>{index + 1}</div>
-                      <div className={styles.lessonInfo}>
-                        <span className={styles.lessonTitle}>{lesson.title}</span>
-                        {lesson.completed && (
-                          <span className={styles.completedBadge}>Completed</span>
-                        )}
+                <h2 className={styles.lessonListTitle}>Course Content</h2>
+                <div className={styles.sections}>
+                  {course.sections.map((section, sectionIndex) => {
+                    const sectionStartFlatIndex = course.sections
+                      .slice(0, sectionIndex)
+                      .reduce((sum, s) => sum + s.lessons.length, 0);
+                      
+                    return (
+                      <div key={section.id} className={styles.sectionItem}>
+                        <h3 className={styles.sectionTitle}>{section.title}</h3>
+                        <div className={styles.lessons}>
+                          {section.lessons.map((lesson, lessonIndex) => {
+                            const flatIndex = sectionStartFlatIndex + lessonIndex;
+                            return (
+                              <div 
+                                key={lesson.id}
+                                className={`${styles.lessonItem} ${flatIndex === currentLessonIndex ? styles.active : ''} ${lesson.completed ? styles.completed : ''}`}
+                                onClick={() => handleLessonClick(flatIndex)}
+                              >
+                                <div className={styles.lessonNumber}>{lesson.order ?? lessonIndex + 1}.</div>
+                                <div className={styles.lessonInfo}>
+                                  <span className={styles.lessonTitle}>{lesson.title}</span>
+                                  {lesson.completed && (
+                                    <span className={styles.completedBadge}>Completed</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               
