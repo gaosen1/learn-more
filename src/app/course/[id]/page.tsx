@@ -354,6 +354,28 @@ export default function CoursePage() {
             </div>
           </div>
           
+          {showQRCode && (
+            <div className={styles.qrCodeContainer || 'mt-4 p-4 border rounded-md text-center'}>
+              <h3 className="text-lg font-semibold mb-2">Course Share QR Code</h3>
+              <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md">
+                <QRCode
+                  id="course-qr-code"
+                  value={getCourseShareUrl()}
+                  size={200}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                />
+                <p className="mt-2 text-sm text-gray-500">{getCourseShareUrl()}</p>
+                <Button 
+                  variant="outline"
+                  className="mt-4"
+                  onClick={downloadQRCode}
+                >
+                  Download QR Code
+                </Button>
+              </div>
+            </div>
+          )}
+          
           {currentUser && course.isEnrolled && (
             <div className={styles.progressSection}>
               <div className={styles.progressHeader}>
